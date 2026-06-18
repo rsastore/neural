@@ -34,11 +34,22 @@ class Tool:
 
 # ── Built-in Tools ────────────────────────────────────────────
 
+DESTRUCTIVE_PATTERNS = ["rm -rf", "rm -fr", "mkfs", "dd if=", "> /dev/sd", "chmod -R 777", 
+                     "wget -O /", "curl -o /", "mv /* ", ":(){ :|:& };:", "git push --force"]
+
 def _exec_shell(cmd: str, cwd: str = "."):
-    return subprocess.run(
-        cmd, shell=True, cwd=cwd,
-        capture_output=True, text=True, timeout=60,
-    )
+    # Safety check
+    cmd_lower = cmd.lower()
+    for pattern in DESTRUCTIVE_PATTERNS:
+        if pattern in cmd_lower:
+            return f"[BLOCKED] Dangerous command detected: {pattern}. Use sandbox_exec or get explicit approval."
+    r = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, timeout=60)
+    out = r.stdout
+    if r.returncode != 0:
+        out += "\n[Exit: {}]".format(r.returncode)
+        if r.stderr:
+            out += "\nSTDERR: {}".format(r.stderr[:300])
+    return out.strip()
 
 def _read_file(path: str):
     p = Path(path)
@@ -46,7 +57,14 @@ def _read_file(path: str):
         return f"File not found: {path}"
     return p.read_text(encoding="utf-8", errors="replace")
 
+SYSTEM_PATHS = ["/etc/", "/boot/", "/usr/", "/bin/", "/sbin/", "/lib/", "/var/log/"]
+
 def _write_file(path: str, content: str):
+    # Safety: block overwriting system files
+    resolved = str(Path(path).resolve())
+    for sp in SYSTEM_PATHS:
+        if resolved.startswith(sp):
+            return f"[BLOCKED] Refusing to write to system path: {sp}"
     Path(path).write_text(content, encoding="utf-8")
     return f"Written {len(content)} bytes to {path}"
 

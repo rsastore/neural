@@ -11,6 +11,11 @@ import sys, os, json, argparse
 from pathlib import Path
 
 def main():
+    # Safety: warn if running as root
+    import os
+    if os.geteuid() == 0:
+        print("\033[33m⚠️  Running as root — dangerous operations will NOT auto-approve!\033[0m")
+        print("\033[33m   Consider creating a non-root user for regular use.\033[0m\n")
     parser = argparse.ArgumentParser(description="Neural — Autonomous AI Agent")
     parser.add_argument("--cli", "-c", type=str, help="Run one-shot command (no TUI)")
     parser.add_argument("--model", "-m", type=str, help="Override model name")

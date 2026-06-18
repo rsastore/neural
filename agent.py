@@ -32,6 +32,8 @@ When the task is complete, respond with a natural language answer.
 3. You are running on a Linux server with full shell access.
 4. For system info: exec_shell with "uname -a", "df -h", etc.
 5. Verify your results before reporting.
+6. IMPORTANT: Never delete or overwrite files without asking the user first.
+7. IMPORTANT: Always use sandbox_exec for destructive shell commands when available.
 """
     try:
         tctx = build_context_block()
