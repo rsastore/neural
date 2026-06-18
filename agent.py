@@ -6,6 +6,7 @@ from tools.builtin import get_tool, tool_descriptions, list_tools, BUILTIN_TOOLS
 from knowledge import search_knowledge, learn_from_interaction, knowledge_summary
 from context import build_context_block, persona_instruction
 from grammar import parse_tool_call as grammar_parse
+from memory import working_context, episodic_context, preference_context, init_working
 
 # ── System Prompt Builder ─────────────────────────────────────
 
@@ -103,6 +104,7 @@ class AgentSession:
     def run(self, user_input: str) -> str:
         """Process user input through agent loop. Returns final answer."""
         if not self._messages:
+            init_working()
             self._messages.append({"role": "system", "content": self._build_sys_prompt()})
         enriched = self._inject_knowledge(user_input)
         self._messages.append({"role": "user", "content": enriched})

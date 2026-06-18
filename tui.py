@@ -233,7 +233,7 @@ class NeuralTUI:
 - `/provider add <name> <url> [key]` — Add custom provider
 - `/persona <mode>` — Switch mode (coder, sysadmin, research, default)
 - `/reference <url>` — Analyze a GitHub repo and compare with Neural
-- `/context` — Show terminal context
+- `/context` — Show terminal context\n- `/memory` — Show working/episodic/preference memory\n- `/remember <fact>` — Add fact to working memory\n- `/pref key=value` — Save user preference
 - `/plan` — Show planning mode
 - `/plugins` — List loaded plugins & tools
 - `/checklist` — Show tasks
@@ -836,6 +836,49 @@ class NeuralTUI:
                 console.print("[dim]Total: 768-d vectors[/dim]")
             except Exception as e:
                 console.print(f"[red]Error: {e}[/red]")
+        elif cmd == "/memory":
+            try:
+                from memory import working_context, episodic_context, preference_context, add_fact, load_working
+                console.print("[bold cyan]Memory Status[/bold cyan]")
+                wc = working_context()
+                if wc:
+                    lines = wc.split("\n")
+                    if len(lines) > 1:
+                        console.print(f"[bold]Working Memory ({len(lines)-1} facts)[/bold]")
+                        for l in lines[1:]:
+                            console.print(f"  {l}")
+                ec = episodic_context()
+                if ec:
+                    lines = ec.split("\n")
+                    console.print(f"[bold]Past Sessions ({len(lines)-1})[/bold]")
+                    for l in lines[1:]:
+                        console.print(f"  [dim]{l}[/dim]")
+                pc = preference_context()
+                if pc:
+                    console.print("[bold]Preferences[/bold]")
+                    lines = pc.split("\n")
+                    for l in lines[1:]:
+                        console.print(f"  {l}")
+            except Exception as e:
+                console.print(f"[red]Error: {e}[/red]")
+        elif cmd.startswith("/remember "):
+            fact = cmd[10:].strip()
+            if fact:
+                from memory import add_fact
+                add_fact(fact)
+                console.print(f"[green]Remembered: {fact}[/green]")
+        elif cmd.startswith("/pref "):
+            parts = cmd.split(maxsplit=1)
+            if len(parts) < 2:
+                console.print("[yellow]Usage: /pref key=value (e.g. /pref shell=bash)[/yellow]")
+            else:
+                kv = parts[1].split("=", 1)
+                if len(kv) == 2:
+                    from memory import save_pref
+                    save_pref(kv[0].strip(), kv[1].strip())
+                    console.print(f"[green]Preference saved: {kv[0].strip()} = {kv[1].strip()}[/green]")
+                else:
+                    console.print("[yellow]Format: key=value[/yellow]")
         elif cmd == "/plugins":
             try:
                 from plugin_loader import list_loaded, list_tools as plt
