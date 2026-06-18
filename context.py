@@ -38,12 +38,17 @@ def build_context_block():
     if t: parts.append(t)
     g = get_git_context()
     if g: parts.append(g)
-    hf = Path(os.path.expanduser("~/.bash_history"))
-    if hf.exists():
-        try:
-            cmds = hf.read_text().strip().split("\n")[-3:]
-            if cmds: parts.append("Recent:\n"+"\n".join(f"  $ {c}" for c in cmds))
-        except: pass
+    import os as _os2
+    for hist_file in ["~/.zsh_history", "~/.bash_history", "~/.history"]:
+        hp = Path(_os2.path.expanduser(hist_file))
+        if hp.exists():
+            try:
+                cmds = hp.read_text().strip().split("\n")[-3:]
+                if cmds:
+                    parts.append("Recent:\n" + "\n".join(f"  $ {c}" for c in cmds))
+            except:
+                pass
+            break
     return "## Terminal Context\n" + "\n".join(parts) if parts else ""
 
 def persona_instruction(name="default"):
