@@ -16,5 +16,11 @@
     "content": "22000stars Rust shared:3 features",
     "source": "reference",
     "created": 1781797509.7518458
+  },
+  {
+    "topic": "get_artwork_details tool",
+    "content": "Tool untuk cek detail artwork di domain art dealer: returns price, availability, artist",
+    "source": "",
+    "created": 1781804197.3198936
   }
 ]

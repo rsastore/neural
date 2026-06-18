@@ -41,12 +41,7 @@ When the task is complete, respond with a natural language answer.
             base += f"\n\n{tctx}"
     except:
         pass
-    try:
-        kctx = search_knowledge(custom_prompt or "")
-        if kctx:
-            base += f"\n\n{kctx}"
-    except:
-        pass
+    # Knowledge is injected per-user-message in run_stream()
     # Add persona instruction
     try:
         pi = persona_instruction(persona)
@@ -129,6 +124,13 @@ class AgentSession:
             self._messages.append({"role": "system", "content": sys_prompt})
 
         self._messages.append({"role": "user", "content": user_input})
+        # Inject relevant knowledge
+        try:
+            kctx = search_knowledge(user_input)
+            if kctx:
+                self._messages.append({"role": "system", "content": kctx})
+        except:
+            pass
 
         for step in range(self.max_iters):
             # Get model response
@@ -179,6 +181,13 @@ class AgentSession:
         if not self._messages:
             self._messages.append({"role": "system", "content": sys_prompt})
         self._messages.append({"role": "user", "content": user_input})
+        # Inject relevant knowledge
+        try:
+            kctx = search_knowledge(user_input)
+            if kctx:
+                self._messages.append({"role": "system", "content": kctx})
+        except:
+            pass
         need_approval = self.config.get("need_approval", ["exec_shell"])
         self._pending_approved = True
         for step in range(self.max_iters):

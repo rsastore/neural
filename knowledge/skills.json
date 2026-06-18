@@ -8,5 +8,13 @@
     },
     "created": 1781797019.0516555,
     "ok": 1
+  },
+  {
+    "name": "art_dealer",
+    "pattern": "Cek ketersediaan artwork untuk klien -> get_artwork_details",
+    "tool": "get_artwork_details",
+    "args_tmpl": {},
+    "created": 1781804197.319634,
+    "ok": 1
   }
 ]
