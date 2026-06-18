@@ -416,6 +416,37 @@ class NeuralTUI:
             console.print(f"[bold cyan]Terminal Context:[/bold cyan]")
             for line in ctx.split("\n")[1:]:
                 console.print(f"  [dim]{line}[/dim]")
+        elif cmd == "/nemotron":
+            console.print("[bold cyan]Nemotron Quick Setup[/bold cyan]")
+            console.print("Step 1: Searching for Nemotron datasets...")
+            from hf_manager import search_hf_datasets
+            results = search_hf_datasets("nemotron agentic", limit=3)
+            nemotron_id = None
+            for r in results:
+                if "SFT-Agentic" in r["id"]:
+                    nemotron_id = r["id"]
+                    console.print(f"  Found: [cyan]{r['id']}[/cyan] ({r['downloads']/1000:.0f}k downloads)")
+                    break
+            if not nemotron_id:
+                console.print("[yellow]Nemotron-SFT-Agentic not found. Trying first result...[/yellow]")
+                if results:
+                    nemotron_id = results[0]["id"]
+            
+            if nemotron_id:
+                console.print(f"\nStep 2: Downloading {nemotron_id}...")
+                from hf_manager import pull_dataset
+                for msg in pull_dataset(nemotron_id):
+                    console.print(f"  {msg}")
+                console.print("\nStep 3: Learning from dataset...")
+                from hf_manager import learn_from_dataset
+                result = learn_from_dataset(nemotron_id, limit=100)
+                if "error" in result:
+                    console.print(f"[red]{result['error']}[/red]")
+                else:
+                    console.print(f"[green]Extracted {result['patterns']} patterns from {result['domains']} domains[/green]")
+                console.print("\n[bold green]Nemotron ready! Neural now knows tool patterns from DeepSeek V3.2[/bold green]")
+            else:
+                console.print("[red]No Nemotron datasets found. Try: /dataset search nemotron[/red]")
         elif cmd == "/models":
             try:
                 from hf_manager import list_installed
@@ -513,8 +544,25 @@ class NeuralTUI:
         elif cmd.startswith("/dataset search "):
             parts = cmd.split(maxsplit=2)
             if len(parts) < 3:
-                console.print("[yellow]Usage: /dataset search <name> <query>[/yellow]")
+                console.print("[yellow]Search HF: /dataset search <query> (e.g. /dataset search nemotron)[/yellow]")
+                console.print("[yellow]Search local: /dataset search <dataset> <query> (e.g. /dataset search nemotron art dealer)[/yellow]")
+            elif len(parts) == 2:
+                # Only 2 parts: search HF catalog
+                query = parts[1]
+                console.print(f"[bold]Searching HuggingFace datasets for:[/bold] {query}")
+                from hf_manager import search_hf_datasets
+                results = search_hf_datasets(query, limit=8)
+                if not results:
+                    console.print("[dim]No results[/dim]")
+                elif "error" in results[0]:
+                    console.print(f"[red]{results[0]['error']}[/red]")
+                else:
+                    for i, r in enumerate(results, 1):
+                        icon = "📄" if r.get("has_jsonl") else "  "
+                        console.print(f"  {i}. {icon} [cyan]{r['id']}[/cyan] [dim]{r['downloads']/1000:.0f}k downloads[/dim]")
+                    console.print("\nUse: /dataset pull <number> or /dataset pull <full-name>")
             else:
+                # 3 parts: search within downloaded dataset
                 name = parts[1]
                 query = parts[2]
                 console.print(f"[bold]Searching {name} for:[/bold] {query}")
@@ -523,7 +571,7 @@ class NeuralTUI:
                 if "error" in result:
                     console.print(f"[red]{result['error']}[/red]")
                 elif result["total"] == 0:
-                    console.print("[dim]No matches found[/dim]")
+                    console.print("[dim]No matches[/dim]")
                 else:
                     for r in result["results"]:
                         console.print(f"  [cyan][{r['domain']}][/cyan] {r['snippet'][:100]}...")

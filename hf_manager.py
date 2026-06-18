@@ -173,3 +173,31 @@ def use_model(model_name):
     with open(fp, 'w') as f:
         tomli_w.dump(cfg, f)
     return f'Switched to {model_name}'
+
+
+def search_hf_datasets(query, limit=10):
+    """Search HuggingFace datasets."""
+    import urllib.parse
+    url = f"https://huggingface.co/api/datasets?search={urllib.parse.quote(query)}&sort=downloads&direction=-1&limit={limit}"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent":"Neural"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read())
+        results = []
+        for d in data:
+            did = d.get("id", d.get("dataset", "?"))
+            downloads = d.get("downloads", 0)
+            tags = d.get("tags", [])
+            # Check if has JSONL files
+            siblings = d.get("siblings", [])
+            has_jsonl = any(s.get("rfilename","").endswith(".jsonl") for s in siblings)
+            results.append({
+                "id": did,
+                "downloads": downloads,
+                "has_jsonl": has_jsonl,
+                "tags": [t for t in tags[:3] if t],
+            })
+        return results
+    except Exception as e:
+        return [{"error": str(e)}]
+
