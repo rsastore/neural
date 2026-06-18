@@ -1,100 +1,234 @@
-<div align="center">
-  <h1>Neural</h1>
-  <p><strong>Autonomous AI Agent — Terminal Native</strong></p>
-  <p>
-    <a href="#"><img src="https://img.shields.io/badge/python-3.11+-blue?logo=python" alt="Python"></a>
-    <a href="#"><img src="https://img.shields.io/github/actions/workflow/status/neural/neural/ci.yml?branch=main" alt="CI"></a>
-    <a href="#"><img src="https://img.shields.io/badge/License-MIT-green" alt="License"></a>
-  </p>
-  Agent loop • Tool calling • Planner • MCP plugins • Docker sandbox • Multi-provider
-</div>
+# RSA Agentic
 
-## Features
+Autonomous AI Agent — Terminal Native. Local LLM or Cloud API.
 
-| Feature | Status |
-|---------|--------|
-| Agent loop (plan->act->observe) | ✅ |
-| Tool calling (shell, file, git, python) | ✅ |
-| Sub-agents (parallel execution) | ✅ |
-| Multi-provider (Ollama, OpenAI) | ✅ |
-| Streaming output | ✅ |
-| Edit file with diff preview | ✅ |
-| Approval gates | ✅ |
-| MCP plugin system | ✅ |
-| Docker sandbox (safe execution) | ✅ |
-| Planner engine (goal+steps+retry) | ✅ |
-| Web browsing | ✅ |
-| Context compaction | ✅ |
-| Session persistence | ✅ |
-| Android (Termux) | ✅ |
+> Agent loop • Planner • RAG • MCP plugins • Docker sandbox • Multi-provider
 
-## Quick Install
+---
+
+## Quick Start
 
 ```bash
-git clone https://github.com/rsastore/rsa-agentic.git ~/rsa-agentic
-cd ~/rsa-agentic
+git clone https://github.com/rsastore/rsa-agentic.git
+cd rsa-agentic
+
+# Local (Ollama)
 pip install prompt_toolkit rich requests
 ollama pull qwen2.5:1.5b
-./neural.py
+python3 neural.py
+
+# Cloud API
+/provider key openai sk-xxxxx
+/provider set openai
+python3 neural.py
 ```
+## Features
 
-## Android (Termux)
+| Area | Feature | Description |
+|------|---------|-------------|
+| **Core** | Agent Loop | Plan → Act → Observe cycle with tool calling |
+| | Planner | Break goals into steps, execute, retry on failure |
+| | Sub-Agents | Parallel execution of independent tasks |
+| | Streaming | Real-time token-by-token output |
+| **Models** | Ollama (local) | Default, works out of box |
+| | OpenAI | GPT-4o, GPT-4o-mini |
+| | Anthropic | Claude Sonnet 4, Haiku 3 |
+| | Google | Gemini Flash, Pro |
+| | Auto-compat | OpenRouter, DeepSeek, Groq, xAI, Together |
+| | Model Manager | /hf search, /hf pull, /model switch |
+| **Tools (18)** | Shell | exec_shell, sandbox_exec (Docker) |
+| | File | read_file, write_file, edit_file (diff), list_dir |
+| | Search | grep_files, web_fetch, web_search |
+| | Git | git_status, git_diff, git_commit, git_log |
+| | GitHub | github_issue, github_pr, github_search |
+| | Code | python_exec |
+| | Utility | notify (desktop notification) |
+| | AI | fine_tune (auto-generate training script) |
+| **Safety** | Approval Gates | Confirm before dangerous operations |
+| | Destructive Block | rm -rf /, system file writes auto-blocked |
+| | Root Warning | Warning when running as root |
+| | Sandbox | Docker-based isolated execution |
+| **Knowledge** | RAG | BM25 search across learned facts + skills |
+| | Self-Learning | Auto-extract knowledge from interactions |
+| | Dataset Manager | /dataset pull, /dataset learn (Nemotron, etc) |
+| | Vector DB | Chroma integration for proper embeddings |
+| **Planning** | Planner Engine | Goal → Steps → Execute → Retry → Complete |
+| | Failure Memory | Remember what failed and why |
+| | Auto-Reference | Auto-analyze GitHub repos for solutions |
+| | Personas | coder, sysadmin, research modes |
+| **Terminal** | Context Awareness | Auto-detect CWD, git branch, OS |
+| | File Explorer | /explorer interactive browsing |
+| | Project Detect | /project auto-detect project type |
+| | Cost Tracking | /cost token usage + $ estimates |
+| | SQLite Storage | Sessions, knowledge, cost history in DB |
+| | Session Manager | Save, load, export conversations |
+| | Context Compaction | /compact summarize long context |
+| **Integration** | MCP Plugins | Model Context Protocol support |
+| | Plugin System | Load custom tools from plugins/ |
+| | REST API | Server mode: POST /chat, /plan, /status |
+| | GitHub Tools | Create issues, PRs, search repos |
+| | Scheduled Tasks | /schedule add, /schedule run |
+| | Reference Analyzer | /reference clone + analyze any GitHub repo |
+## Commands Reference
 
-```bash
-pkg install git cmake python ninja build-essential openblas
-pip install prompt_toolkit rich requests
-git clone https://github.com/ggerganov/llama.cpp
-cd llama.cpp && mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DLLAMA_OPENBLAS=ON ..
-make -j4 llama-cli
-mkdir -p ~/storage/models
-cd ~/storage/models
-wget -O qwen2.5-1.5b-instruct-q4_k_m.gguf https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf
-git clone https://github.com/rsastore/rsa-agentic.git ~/rsa-agentic
-cd ~/rsa-agentic && python3 neural.py
-```
+### Basic
+| Command | Description |
+|---------|-------------|
+| `/help` | Show help |
+| `/clear` | Clear screen |
+| `/reset` | Reset conversation |
+| `/status` | Session info + tools count |
+| `/tools` | List available tools |
+| `/exit` | Quit |
 
-## Docker Sandbox
+### Model & Provider
+| Command | Description |
+|---------|-------------|
+| `/provider` | List providers and API key status |
+| `/provider set <name>` | Switch provider (ollama, openai, anthropic, google) |
+| `/provider key <name> <key>` | Set API key for a provider |
+| `/provider add <name> <url> <key>` | Add custom OpenAI-compatible provider |
+| `/models` | List installed models |
+| `/model <name>` | Switch to a model |
+| `/hf search <query>` | Search HuggingFace for GGUF models |
+| `/hf pull <id>` | Download model from HuggingFace |
 
-Run exec_shell commands safely inside a container:
+### Knowledge & Learning
+| Command | Description |
+|---------|-------------|
+| `/knowledge` | Show learned facts and skills |
+| `/forget` | Clear all learned knowledge |
+| `/nemotron` | One-click download + learn from Nemotron dataset |
+| `/dataset list` | List downloaded datasets |
+| `/dataset pull <name>` | Download a HuggingFace dataset |
+| `/dataset learn <name>` | Extract patterns from dataset |
+| `/dataset search <query>` | Find datasets on HuggingFace |
 
-```bash
-docker build -t neural-sandbox -f Dockerfile.sandbox .
-neural --sandbox
-```
+### Planning & Execution
+| Command | Description |
+|---------|-------------|
+| `/plan <goal>` | Create plan, execute steps with retry |
+| `/checklist` | Show task list |
+| `/checklist add <task>` | Add task manually |
+| `/checklist done <n>` | Mark task complete |
 
-## MCP Plugins
+### Project & Files
+| Command | Description |
+|---------|-------------|
+| `/project` | Auto-detect project type, deps, git remote |
+| `/tree [depth]` | Show project file tree |
+| `/explorer` | Interactive file browser (ls, cat, up, q) |
 
-Connect any MCP server:
+### Agent Control
+| Command | Description |
+|---------|-------------|
+| `/persona` | Show current mode |
+| `/persona <mode>` | Switch mode (coder, sysadmin, research, default) |
+| `/context` | Show terminal context (CWD, git, host) |
+| `/compact` | Summarize and compress long context |
 
-```json
-// plugins/mcp_servers.json
-{
-  "sqlite": {
-    "cmd": "uvx",
-    "args": ["mcp-server-sqlite", "--db-path", "/tmp/test.db"]
-  }
-}
-```
+### Cost & Schedule
+| Command | Description |
+|---------|-------------|
+| `/cost` | Current session token usage |
+| `/cost history` | Cost log across sessions |
+| `/schedule` | List scheduled tasks |
+| `/schedule add <name> <goal>` | Add a scheduled task |
+| `/schedule run` | Execute all pending tasks |
 
-## Commands
+### Integration
+| Command | Description |
+|---------|-------------|
+| `/plugins` | List loaded plugin tools |
+| `/reference <url>` | Analyze any GitHub repo |
+| `/session list` | List saved sessions |
+| `/session load <name>` | Load a session |
+| `/save` | Force save current session |
 
-/help /clear /reset /status /tools /plugins /plan plan /checklist /session /compact /save /exit
-
+### Server Mode
+| Command | Description |
+|---------|-------------|
+| `--server` | Start REST API server on port 8765 |
+| `--cli <query>` | One-shot CLI mode (non-interactive) |
 ## Architecture
 
 ```
-neural/
-|- neural.py       Entry point
-|- tui.py          Terminal UI
-|- agent.py        Agent loop + sub-agents
-|- planner.py      Planner engine (goal + steps + retry)
-|- compact.py      Context compaction
-|- sessions.py     Session persistence
-|- config.toml     Configuration
-|- models/         Multi-provider abstraction
-|- tools/          Built-in tools
-|- plugins/        MCP plugins
-|- sessions/       Saved conversations
+rsa-agentic/
+├── neural.py              Entry point (CLI / TUI / Server)
+├── tui.py                 Terminal UI (prompt_toolkit + rich)
+├── agent.py               Agent loop + tool calling + sub-agents
+├── planner.py             Planner engine (goal → steps → retry)
+├── knowledge.py           RAG + self-learning (BM25)
+├── context.py             Terminal context + personas
+├── compact.py             Context compaction
+├── sessions.py            Session persistence
+├── db.py                  SQLite storage
+├── server.py              REST API server
+├── reference.py           GitHub repo analyzer
+├── hf_manager.py          HuggingFace model + dataset manager
+├── vectordb.py            Chroma vector DB adapter
+├── plugin_loader.py       Plugin discovery
+├── config.toml            Configuration
+├── system.md              System prompt template
+├── SDK.md                 Plugin development guide
+│
+├── models/
+│   ├── base.py            Abstract provider
+│   └── providers.py       Ollama, OpenAI, Anthropic, Google
+│
+├── tools/
+│   ├── builtin.py         18 built-in tools
+│   └── git_tools.py       Git automation
+│
+├── plugins/               Custom tools (MCP + Python)
+├── knowledge/             Facts + skills (learned data)
+├── datasets/              Downloaded HF datasets
+└── sessions/              Saved conversations
+```
+## Examples
+
+### System Admin
+```
+/persona sysadmin
+/plan check disk, ram, and generate report
+→ Neural runs df -h, free -h, top
+→ Writes report to report.md
+→ Done
 ```
 
+### Coding
+```
+/persona coder
+/project
+→ Auto-detects Node.js / Python / Rust project
+→ Shows deps, git remote
+
+/plan "add login feature"
+→ Neural reads existing code
+→ Creates new files
+→ Commits with git_commit
+```
+
+### Research
+```
+/persona research
+/reference https://github.com/rsastore/rsa-agentic
+→ Clones, analyzes structure, compares features
+→ Injects findings into knowledge
+
+/nemotron
+→ Auto-downloads 12k agent examples from DeepSeek V3.2
+→ Extracts tool patterns → Neural learns
+```
+
+### API Integration
+```
+# Terminal
+/provider key openai sk-xxxxx
+/provider set openai
+→ Now using GPT-4o
+
+# From another app (Server mode)
+neural --server &
+curl http://localhost:8765/chat -d '{"message":"check disk"}'
+```
