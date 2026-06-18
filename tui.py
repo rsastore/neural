@@ -474,6 +474,65 @@ class NeuralTUI:
                     console.print(f"[green]{result}[/green]")
                 except Exception as e:
                     console.print(f"[red]Error: {e}[/red]")
+        elif cmd == "/dataset list":
+            try:
+                from hf_manager import list_datasets
+                ds = list_datasets()
+                if not ds:
+                    console.print("[dim]No datasets downloaded.[/dim]")
+                    console.print("Try: /dataset pull nvidia/Nemotron-SFT-Agentic-v2")
+                else:
+                    console.print("[bold cyan]Downloaded Datasets:[/bold cyan]")
+                    for name, info in ds.items():
+                        console.print(f"  [green]●[/green] {name:<50} {info['samples']:>6} samples")
+            except Exception as e:
+                console.print(f"[red]Error: {e}[/red]")
+        elif cmd.startswith("/dataset pull "):
+            name = cmd[14:].strip()
+            if not name:
+                console.print("[yellow]Usage: /dataset pull <hf-dataset-name>[/yellow]")
+                console.print("[dim]Example: /dataset pull nvidia/Nemotron-SFT-Agentic-v2[/dim]")
+            else:
+                console.print(f"[bold]Downloading dataset:[/bold] {name}")
+                from hf_manager import pull_dataset
+                for msg in pull_dataset(name):
+                    console.print(f"  {msg}")
+        elif cmd.startswith("/dataset learn "):
+            name = cmd[15:].strip()
+            if not name:
+                console.print("[yellow]Usage: /dataset learn <name>[/yellow]")
+            else:
+                console.print(f"[bold]Learning from:[/bold] {name}")
+                from hf_manager import learn_from_dataset
+                result = learn_from_dataset(name, limit=100)
+                if "error" in result:
+                    console.print(f"[red]{result['error']}[/red]")
+                else:
+                    console.print(f"[green]Extracted {result['patterns']} patterns from {result['domains']} domains[/green]")
+                    console.print("[green]Injected into Neural knowledge![/green]")
+        elif cmd.startswith("/dataset search "):
+            parts = cmd.split(maxsplit=2)
+            if len(parts) < 3:
+                console.print("[yellow]Usage: /dataset search <name> <query>[/yellow]")
+            else:
+                name = parts[1]
+                query = parts[2]
+                console.print(f"[bold]Searching {name} for:[/bold] {query}")
+                from hf_manager import search_dataset
+                result = search_dataset(name, query, limit=3)
+                if "error" in result:
+                    console.print(f"[red]{result['error']}[/red]")
+                elif result["total"] == 0:
+                    console.print("[dim]No matches found[/dim]")
+                else:
+                    for r in result["results"]:
+                        console.print(f"  [cyan][{r['domain']}][/cyan] {r['snippet'][:100]}...")
+        elif cmd == "/dataset":
+            console.print("[bold cyan]Dataset Manager[/bold cyan]")
+            console.print("  /dataset list")
+            console.print("  /dataset pull <name>")
+            console.print("  /dataset learn <name>")
+            console.print("  /dataset search <name> <query>")
         elif cmd == "/plugins":
             try:
                 from plugin_loader import list_loaded, list_tools as plt

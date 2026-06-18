@@ -1,87 +1,175 @@
-"""Model Manager — search, download, use models from HuggingFace."""
-import os, subprocess, json, urllib.request, re
+"""Dataset Manager — download, index, search, learn from HF datasets."""
+import os, json, urllib.request, re
 from pathlib import Path
 
-MODELS_DIR = Path(os.path.expanduser("~/neural/models_data"))
+DATA_DIR = Path(os.path.expanduser("~/neural/datasets"))
+INDEX_DIR = Path(os.path.expanduser("~/neural/datasets/.index"))
 
-HF_API = "https://huggingface.co/api/models"
+def _api_url(dataset, file_path):
+    return f"https://huggingface.co/datasets/{dataset}/resolve/main/{file_path}"
+
+def list_datasets():
+    """List downloaded datasets."""
+    if not DATA_DIR.exists():
+        return []
+    datasets = {}
+    for d in DATA_DIR.iterdir():
+        if d.is_dir() and not d.name.startswith("."):
+            files = list(d.glob("*.jsonl"))
+            total_lines = sum(1 for f in files for _ in open(f) if f.stat().st_size > 0) if files else 0
+            datasets[d.name] = {"files": len(files), "samples": total_lines}
+    return datasets
+
+def pull_dataset(name, files=None):
+    """Download a HuggingFace dataset. Returns list of status messages."""
+    msgs = []
+    safe_name = name.replace("/", "_")
+    dest = DATA_DIR / safe_name
+    dest.mkdir(parents=True, exist_ok=True)
+    
+    # Get file list from API
+    try:
+        url = f"https://huggingface.co/api/datasets/{name}"
+        req = urllib.request.Request(url, headers={"User-Agent": "Neural"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            meta = json.loads(r.read())
+        siblings = meta.get("siblings", [])
+        jsonl_files = [s.get("rfilename","") for s in siblings if s.get("rfilename","").endswith(".jsonl")]
+        if not jsonl_files:
+            return ["No JSONL files found in dataset"]
+        msgs.append(f"Found {len(jsonl_files)} JSONL files")
+    except Exception as e:
+        return [f"API error: {e}"]
+
+    # Download each JSONL file
+    total_samples = 0
+    for jf in jsonl_files[:10]:  # Max 10 files
+        dest_file = dest / jf.replace("/", "_")
+        if dest_file.exists():
+            count = sum(1 for _ in open(dest_file))
+            total_samples += count
+            msgs.append(f"  Already: {jf} ({count} samples)")
+            continue
+        dl_url = _api_url(name, jf)
+        msgs.append(f"  Downloading: {jf}...")
+        try:
+            req = urllib.request.Request(dl_url, headers={"User-Agent": "Neural"})
+            with urllib.request.urlopen(req, timeout=120) as r:
+                count = 0
+                with open(dest_file, "w") as fout:
+                    for line in r:
+                        fout.write(line.decode())
+                        count += 1
+                total_samples += count
+                msgs.append(f"  Downloaded: {jf} ({count} samples)")
+        except Exception as e:
+            msgs.append(f"  Error: {e}")
+    msgs.append(f"\nDone: {total_samples} total samples")
+    return msgs
+
+def search_dataset(name, query, limit=5):
+    safe_name = name.replace("/", "_")
+    data_dir = DATA_DIR / safe_name
+    if not data_dir.exists():
+        return {"error": f"Dataset not downloaded"}
+    results = []
+    q = query.lower()
+    for jf in data_dir.glob("*.jsonl"):
+        for line in open(jf):
+            try:
+                entry = json.loads(line)
+                for m in entry.get("messages", []):
+                    c = m.get("content", "")
+                    if isinstance(c, str) and q in c.lower():
+                        results.append({"domain":entry.get("domain","?"), "snippet":c[:200]})
+                        break
+                if len(results) >= limit: break
+            except: pass
+        if len(results) >= limit: break
+    return {"results": results, "total": len(results)}
+
+def learn_from_dataset(name, limit=50):
+    safe_name = name.replace("/", "_")
+    data_dir = DATA_DIR / safe_name
+    if not data_dir.exists():
+        return {"error": "Not downloaded"}
+    from knowledge import add_skill, add_fact
+    patterns = 0; domains = set()
+    for jf in data_dir.glob("*.jsonl"):
+        for i, line in enumerate(open(jf)):
+            if i >= limit: break
+            try:
+                e = json.loads(line)
+                d = e.get("domain", "?")
+                domains.add(d)
+                tools = [t.get("function",{}).get("name","?") for t in e.get("tools",[])[:3]]
+                first = ""
+                for m in e.get("messages",[]):
+                    if m.get("role")=="user":
+                        first = m.get("content","")[:80]
+                        break
+                if tools and first:
+                    add_skill(f"nemotron_{d[:15]}_{i}", f"[{d}] {first[:50]} -> {tools[0]}", tools[0], {})
+                    patterns += 1
+            except: pass
+    add_fact("Nemotron", f"{patterns} patterns from {len(domains)} domains")
+    return {"patterns": patterns, "domains": len(domains)}
+
+
+# ── Model Management ──
+
+MODELS_DIR = __import__('pathlib').Path(os.path.expanduser('~/neural/models_data'))
 
 def list_installed():
-    """List models available locally (via Ollama or direct GGUF)."""
     models = []
-    # Check Ollama
     try:
-        r = subprocess.run(["ollama","list"], capture_output=True, text=True, timeout=10)
-        for line in r.stdout.strip().split("\n")[1:]:
+        r = __import__('subprocess').run(['ollama','list'], capture_output=True, text=True, timeout=10)
+        for line in r.stdout.strip().split('\n')[1:]:
             if line.strip():
                 parts = line.split()
                 if parts:
-                    models.append({"name": parts[0], "size": parts[2] if len(parts)>2 else "?","backend":"ollama"})
-    except: pass
-    # Check local GGUF files
+                    models.append({'name': parts[0], 'size': parts[2] if len(parts)>2 else '?','backend':'ollama'})
+    except:
+        pass
     if MODELS_DIR.exists():
-        for f in MODELS_DIR.glob("*.gguf"):
+        for f in MODELS_DIR.glob('*.gguf'):
             size = f.stat().st_size / 1024 / 1024
-            models.append({"name": f.stem, "size": f"{size:.0f}MB", "backend":"gguf"})
+            models.append({'name': f.stem, 'size': f'{size:.0f}MB', 'backend':'gguf'})
     return models
 
 def search_hf(query, limit=10):
-    """Search HuggingFace for GGUF models."""
     import urllib.parse
-    url = f"{HF_API}?search={urllib.parse.quote(query)}&sort=downloads&direction=-1&limit={limit}"
-    # Also filter by GGUF tag
+    url = f'https://huggingface.co/api/models?search={urllib.parse.quote(query)}&sort=downloads&direction=-1&limit={limit}'
     try:
-        req = urllib.request.Request(url, headers={"User-Agent":"Neural"})
+        req = urllib.request.Request(url, headers={'User-Agent':'Neural'})
         with urllib.request.urlopen(req, timeout=15) as r:
             data = json.loads(r.read())
-        results = []
-        for m in data:
-            results.append({
-                "id": m.get("modelId", m.get("id","")),
-                "downloads": m.get("downloads",0),
-                "likes": m.get("likes",0),
-                "tags": [t for t in m.get("tags",[]) if t],
-            })
-        # Filter for GGUF
-        gguf_results = [r for r in results if "gguf" in str(r["tags"]).lower() or "gguf" in r["id"].lower()]
-        return gguf_results[:limit] or results[:limit]
+        return [{'id': m.get('modelId', m.get('id','')), 'downloads': m.get('downloads',0)} for m in data]
     except Exception as e:
-        return [{"error": str(e)}]
+        return [{'error': str(e)}]
 
 def pull_model(model_id):
-    """Download a model and set it up. Returns status messages as list."""
     msgs = []
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    # Determine filename from model ID
-    # For now, try Ollama pull first
-    short = model_id.split("/")[-1].replace("-Instruct-GGUF","").replace("-GGUF","")
+    short = model_id.split('/')[-1].replace('-Instruct-GGUF','').replace('-GGUF','')
     try:
-        msgs.append(f"Pulling {short} via Ollama...")
-        r = subprocess.run(["ollama","pull",short], capture_output=True, text=True, timeout=300)
+        msgs.append(f'Pulling {short}...')
+        r = __import__('subprocess').run(['ollama','pull',short], capture_output=True, text=True, timeout=300)
         if r.returncode == 0:
-            msgs.append(f" Done: {short}")
+            msgs.append(f'Done: {short}')
             return msgs
-    except: pass
-    # Fallback: try direct GGUF download from HuggingFace
-    # Find the actual GGUF file URL
-    # This is simplified - in real impl would parse HF API for file list
-    msgs.append(f"Try: ollama pull {short}")
-    msgs.append("Or download GGUF manually from huggingface.co/" + model_id)
+    except:
+        pass
+    msgs.append(f'Try: ollama pull {short}')
     return msgs
 
 def use_model(model_name):
-    """Switch Neural to use a specific model."""
     import tomllib
-    cfg_path = os.path.expanduser("~/neural/config.toml")
-    with open(cfg_path, "rb") as f:
+    fp = os.path.expanduser('~/neural/config.toml')
+    with open(fp, 'rb') as f:
         cfg = tomllib.load(f)
-    if "model" not in cfg:
-        cfg["model"] = {}
-    cfg["model"]["model_name"] = model_name
+    cfg['model']['model_name'] = model_name
     import tomli_w
-    try:
-        with open(cfg_path, "w") as f:
-            tomli_w.dump(cfg, f)
-        return f"Switched to {model_name}"
-    except:
-        return f"Failed to update config. Set model_name={model_name} in config.toml manually."
+    with open(fp, 'w') as f:
+        tomli_w.dump(cfg, f)
+    return f'Switched to {model_name}'
