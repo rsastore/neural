@@ -4,6 +4,7 @@ from pathlib import Path
 from collections import Counter
 
 KDIR = Path(__file__).parent / "knowledge"
+KDIR.mkdir(parents=True, exist_ok=True)
 
 import threading as _threading
 _lock = _threading.Lock()
@@ -63,6 +64,8 @@ def add_fact(topic, content, source=""):
 
 def add_skill(name, pattern, tool, args_tmpl):
     skills = get_skills()
+    for s in skills:
+        if s["name"] == name and s["tool"] == tool: return  # dedup
     skills.append({"name": name, "pattern": pattern, "tool": tool,
                    "args_tmpl": args_tmpl, "created": time.time(), "ok": 1})
     _save("skills.json", skills)
@@ -109,15 +112,34 @@ def search_knowledge(query, k=5):
         lines.append(f"[{tag}{score:.2f}] {doc}")
     return "\n".join(lines)
 
+# ── Learning quality filters ──────────────────────────────────
+_MIN_TERM_LEN = 8
+_MAX_FACTS_PER_TURN = 2
+_SKIP_TERMS = {"Error", "Result", "True", "False", "None", "Step", "User",
+               "System", "Please", "Note", "Warning", "Important", "Example",
+               "Output", "Input", "Thank", "Here", "This", "That"}
+_TRIVIAL_TOOLS = {"notify"}
+
+def _is_meaningful_term(term: str) -> bool:
+    if len(term) < _MIN_TERM_LEN: return False
+    if term in _SKIP_TERMS: return False
+    words = term.split()
+    if len(words) == 1 and len(term) < 12: return False
+    return True
+
 def learn_from_interaction(usr, out, tool_history, success=True):
-    if not success or not out:
-        return
-    terms = set(re.findall(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\b", out))
-    for t in list(terms)[:3]:
-        if len(t) >= 5:
-            add_fact(t, out[:200], source=usr[:50])
+    if not success or not out or len(out) < 50: return
+    # Extract multi-word Title Case phrases (e.g. "Docker Container")
+    terms = re.findall(r"\b([A-Z][a-z]{3,}(?:\s+[A-Z][a-z]{3,})+)\b", out)
+    saved = 0
+    for t in terms:
+        if saved >= _MAX_FACTS_PER_TURN: break
+        if _is_meaningful_term(t):
+            add_fact(t, out[:150], source=usr[:50])
+            saved += 1
+    # Save skills for non-trivial tools
     for tn, ta, res in tool_history[-3:]:
-        if "error" not in res.lower()[:50] and len(res) > 10:
+        if tn not in _TRIVIAL_TOOLS and "error" not in res.lower()[:50] and len(res) > 20:
             add_skill(f"use_{tn}", usr[:80], tn, ta)
     s = get_stats()
     s["total_sessions"] = s.get("total_sessions", 0) + 1
