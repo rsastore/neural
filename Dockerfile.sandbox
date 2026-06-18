@@ -1,0 +1,8 @@
+FROM python:3.11-slim
+
+RUN pip install --no-cache-dir prompt_toolkit rich requests
+
+WORKDIR /workspace
+
+# Default sandbox: no network, limited resources
+CMD ["sleep", "infinity"]

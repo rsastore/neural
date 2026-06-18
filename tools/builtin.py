@@ -102,6 +102,30 @@ def _fetch_url(url: str, max_chars: int = 5000):
         return f"Error fetching URL: {e}"
 
 
+def _sandbox_exec(cmd: str, image: str = "neural-sandbox:latest"):
+    """Execute a command inside a Docker sandbox container."""
+    import subprocess
+    try:
+        r = subprocess.run(
+            ["docker", "run", "--rm", "-i", "--network", "none",
+             "--memory", "512m", "--cpus", "1", image,
+             "sh", "-c", cmd],
+            capture_output=True, text=True, timeout=60,
+        )
+        out = r.stdout
+        if r.returncode != 0:
+            out += f"\n[Exit: {r.returncode}]"
+            if r.stderr:
+                out += f"\nSTDERR: {r.stderr[:500]}"
+        return out
+    except FileNotFoundError:
+        return "Error: Docker not found. Use exec_shell directly."
+    except subprocess.TimeoutExpired:
+        return "Error: Command timed out in sandbox."
+    except Exception as e:
+        return f"Sandbox error: {e}"
+
+
 def _edit_file(path: str, search: str, replace: str, mode: str = "preview"):
     """Edit a file with search/replace. Shows diff in preview mode."""
     import difflib
@@ -135,6 +159,10 @@ BUILTIN_TOOLS = [
     Tool("web_fetch", _fetch_url,
          "Fetch a URL and extract readable text.",
          {"url": "URL to fetch", "max_chars": "max chars to return (optional)"}),
+
+    Tool("sandbox_exec", _sandbox_exec,
+         "Execute a command in Docker sandbox (safe, isolated).",
+         {"cmd": "command to run", "image": "Docker image (optional)"}),
 
     Tool("exec_shell", _exec_shell,
          "Execute a shell command on the system.",

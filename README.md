@@ -1,84 +1,103 @@
-# Neural — Autonomous AI Agent
+<div align="center">
+  <h1>Neural</h1>
+  <p><strong>Autonomous AI Agent — Terminal Native</strong></p>
+  <p>
+    <a href="#"><img src="https://img.shields.io/badge/python-3.11+-blue?logo=python" alt="Python"></a>
+    <a href="#"><img src="https://img.shields.io/github/actions/workflow/status/neural/neural/ci.yml?branch=main" alt="CI"></a>
+    <a href="#"><img src="https://img.shields.io/badge/License-MIT-green" alt="License"></a>
+  </p>
+  Agent loop • Tool calling • Planner • MCP plugins • Docker sandbox • Multi-provider
+</div>
 
-> Terminal-based AI agent with tool calling, multi-provider, sub-agents, and MCP plugin system.
-> Inspired by DeepSeek TUI, OpenHands, Continue, Claude Code, GPT Codex, and Goose.
+## Features
 
-## Quick Start (VPS)
+| Feature | Status |
+|---------|--------|
+| Agent loop (plan->act->observe) | ✅ |
+| Tool calling (shell, file, git, python) | ✅ |
+| Sub-agents (parallel execution) | ✅ |
+| Multi-provider (Ollama, OpenAI) | ✅ |
+| Streaming output | ✅ |
+| Edit file with diff preview | ✅ |
+| Approval gates | ✅ |
+| MCP plugin system | ✅ |
+| Docker sandbox (safe execution) | ✅ |
+| Planner engine (goal+steps+retry) | ✅ |
+| Web browsing | ✅ |
+| Context compaction | ✅ |
+| Session persistence | ✅ |
+| Android (Termux) | ✅ |
+
+## Quick Install
 
 ```bash
+git clone https://github.com/neural-ai/neural.git ~/neural
 cd ~/neural
-python3 neural.py           # TUI mode
-python3 neural.py -cli "check disk"   # CLI mode
+pip install prompt_toolkit rich requests
+ollama pull qwen2.5:1.5b
+./neural.py
 ```
 
-## Deploy to Android (Termux)
-
-### Requirements
-- Realme 13+ (6GB+ RAM)
-- Termux from F-Droid
-- 2GB free storage
-
-### Setup
+## Android (Termux)
 
 ```bash
-# 1. Install
 pkg install git cmake python ninja build-essential openblas
 pip install prompt_toolkit rich requests
-
-# 2. Build llama.cpp
-cd ~
 git clone https://github.com/ggerganov/llama.cpp
 cd llama.cpp && mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DLLAMA_OPENBLAS=ON -DLLAMA_NATIVE=ON ..
+cmake -DCMAKE_BUILD_TYPE=Release -DLLAMA_OPENBLAS=ON ..
 make -j4 llama-cli
-
-# 3. Download model
 mkdir -p ~/storage/models
 cd ~/storage/models
-wget -O qwen2.5-1.5b-instruct-q4_k_m.gguf \
-  "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf"
-
-# 4. Clone + run
-git clone <your-repo> ~/neural
-cd ~/neural
-python3 neural.py
+wget -O qwen2.5-1.5b-instruct-q4_k_m.gguf https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf
+git clone https://github.com/neural-ai/neural.git ~/neural
+cd ~/neural && python3 neural.py
 ```
 
-### Performance (Realme 13+)
+## Docker Sandbox
 
-| Model | Speed | RAM |
-|-------|-------|-----|
-| Qwen2.5-1.5B Q4 | 8-15 tok/s | 2-3GB |
-| Llama-3.2-1B Q4 | 12-20 tok/s | 1.5-2GB |
+Run exec_shell commands safely inside a container:
+
+```bash
+docker build -t neural-sandbox -f Dockerfile.sandbox .
+neural --sandbox
+```
+
+## MCP Plugins
+
+Connect any MCP server:
+
+```json
+// plugins/mcp_servers.json
+{
+  "sqlite": {
+    "cmd": "uvx",
+    "args": ["mcp-server-sqlite", "--db-path", "/tmp/test.db"]
+  }
+}
+```
+
+## Commands
+
+/help /clear /reset /status /tools /plugins /plan plan /checklist /session /compact /save /exit
 
 ## Architecture
 
 ```
 neural/
-├── neural.py          # Entry point (CLI / TUI)
-├── tui.py             # Terminal UI (prompt_toolkit + rich)
-├── agent.py           # Agent loop + sub-agents
-├── sessions.py        # Session persistence
-├── config.toml        # Configuration
-├── system.md          # System prompt
-├── models/
-│   ├── base.py        # Abstract provider
-│   └── providers.py   # Ollama, OpenAI, llama.cpp
-├── tools/
-│   └── builtin.py     # Shell, file, git, python tools
-├── sessions/          # Saved conversations
-└── plugins/           # MCP plugins (coming soon)
+|- neural.py       Entry point
+|- tui.py          Terminal UI
+|- agent.py        Agent loop + sub-agents
+|- planner.py      Planner engine (goal + steps + retry)
+|- compact.py      Context compaction
+|- sessions.py     Session persistence
+|- config.toml     Configuration
+|- models/         Multi-provider abstraction
+|- tools/          Built-in tools
+|- plugins/        MCP plugins
+|- sessions/       Saved conversations
 ```
 
-## Commands
+## Credits
 
-| Command | Action |
-|---------|--------|
-| /help | Show help |
-| /clear | Clear screen |
-| /reset | Reset conversation |
-| /status | Session info |
-| /tools | List tools |
-| /history | Recent sessions |
-| /save | Save session |
-| /exit | Quit |
+Inspired by DeepSeek TUI, Claude Code, Goose, OpenHands, Continue, GPT Codex.

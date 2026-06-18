@@ -1,0 +1,29 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install prompt_toolkit rich requests
+      - name: Syntax check
+        run: |
+          python3 -m py_compile neural.py
+          python3 -m py_compile tui.py
+          python3 -m py_compile agent.py
+          python3 -m py_compile planner.py
+          python3 -m py_compile compact.py
+          python3 -m py_compile sessions.py
+          python3 -m py_compile models/providers.py
+          python3 -m py_compile models/base.py
+          python3 -m py_compile tools/builtin.py
+      - name: Import check
+        run: python3 -c "import sys; sys.path.insert(0,'.'); import agent, compact, sessions, tools.builtin; print('All imports OK')"
