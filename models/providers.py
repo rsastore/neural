@@ -177,7 +177,7 @@ class GoogleProvider(ModelProvider):
             if m["role"] in ("user", "assistant"):
                 history.append({"role": m["role"], "parts": [m["content"]]})
         prompt = messages[-1]["content"] if messages else ""
-        chat = model.start_chat(history=history) if history else model
+        chat = model.start_chat(history=history)
         r = chat.send_message(prompt)
         return r.text
 
@@ -190,7 +190,7 @@ class GoogleProvider(ModelProvider):
             if m["role"] in ("user", "assistant"):
                 history.append({"role": m["role"], "parts": [m["content"]]})
         prompt = messages[-1]["content"] if messages else ""
-        chat = model.start_chat(history=history) if history else model
+        chat = model.start_chat(history=history)
         r = chat.send_message(prompt, stream=True)
         for chunk in r:
             if chunk.text:
