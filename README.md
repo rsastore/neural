@@ -178,6 +178,9 @@ No root required. Runs in Termux with local models via llama.cpp.
 | `/persona <mode>` | Switch mode (coder, sysadmin, research, default) |
 | `/context` | Show terminal context (CWD, git, host) |
 | `/compact` | Summarize and compress long context |
+| `/memory` | Show working/episodic/preference memory |
+| `/remember <fact>` | Add fact to working memory |
+| `/pref key=value` | Save user preference |
 
 ### Cost & Schedule
 | Command | Description |
@@ -187,6 +190,9 @@ No root required. Runs in Termux with local models via llama.cpp.
 | `/schedule` | List scheduled tasks |
 | `/schedule add <name> <goal>` | Add a scheduled task |
 | `/schedule run` | Execute all pending tasks |
+| `/cost` | Session token & cost estimate |
+| `/cost history` | Cost log across sessions |
+| `/quant` | Auto-detect RAM & recommend best model |
 
 ### Integration
 | Command | Description |
@@ -196,12 +202,14 @@ No root required. Runs in Termux with local models via llama.cpp.
 | `/session list` | List saved sessions |
 | `/session load <name>` | Load a session |
 | `/save` | Force save current session |
+| `/ft <dataset> [model]` | Generate fine-tuning script |
 
 ### Server Mode
 | Command | Description |
 |---------|-------------|
 | `--server` | Start REST API server on port 8765 |
 | `--cli <query>` | One-shot CLI mode (non-interactive) |
+| `/vectordb` | Rebuild vector index with embeddings |
 ## Architecture
 
 ```
