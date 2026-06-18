@@ -82,7 +82,31 @@ def _python_exec(code: str):
     return out
 
 
+
+def _fetch_url(url: str, max_chars: int = 5000):
+    """Fetch a URL and return text content."""
+    import urllib.request, re
+    try:
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+        })
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            html = resp.read().decode('utf-8', errors='replace')
+            # Strip HTML tags
+            text = re.sub(r'<[^>]+>', ' ', html)
+            text = re.sub(r'\s+', ' ', text).strip()
+            if len(text) > max_chars:
+                text = text[:max_chars] + "\n... (truncated)"
+            return text
+    except Exception as e:
+        return f"Error fetching URL: {e}"
+
+
 BUILTIN_TOOLS = [
+    Tool("web_fetch", _fetch_url,
+         "Fetch a URL and extract readable text.",
+         {"url": "URL to fetch", "max_chars": "max chars to return (optional)"}),
+
     Tool("exec_shell", _exec_shell,
          "Execute a shell command on the system.",
          {"cmd": "command to run", "cwd": "working directory (optional)"}),

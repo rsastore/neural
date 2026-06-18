@@ -15,6 +15,7 @@ from rich.text import Text
 from rich import box
 
 from agent import AgentSession, SubAgent
+from compact import compact_messages
 from models.providers import create_provider
 from tools.builtin import list_tools
 
@@ -55,6 +56,7 @@ class NeuralTUI:
         self.config = config
         self.provider = create_provider(config.get("model", {}))
         self.session = AgentSession(self.provider, config.get("agent", {}))
+        self.checklist: list[dict] = []
         self.tool_history: list[tuple] = []
         self.status = "idle"
 
@@ -198,6 +200,13 @@ class NeuralTUI:
 - `/reset` — Reset conversation
 - `/status` — Show session info
 - `/tools` — List available tools
+- `/compact` — Compact long context (summarize old messages)
+- `/plan` — Show planning mode
+- `/checklist` — Show tasks
+- `/checklist add <task>` — Add task
+- `/checklist done <n>` — Mark done
+- `/checklist rm <n>` — Remove task
+- `/checklist clear` — Clear all
 - `/history` — Show recent sessions
 - `/session list` — List all sessions
 - `/session load <name>` — Load a session
@@ -232,6 +241,51 @@ class NeuralTUI:
                 for s in sessions[-5:]:
                     size = s.stat().st_size
                     console.print(f"  [dim]{s.name} ({size} bytes)[/dim]")
+        elif cmd.startswith("/checklist"):
+            parts = cmd.split(maxsplit=2)
+            action = parts[1] if len(parts) > 1 else "show"
+            if action == "add" and len(parts) > 2:
+                self.checklist.append({"task": parts[2], "done": False})
+                console.print(f"[green]Added: {parts[2]}[/green]")
+            elif action == "done" and len(parts) > 2:
+                idx = int(parts[2]) - 1
+                if 0 <= idx < len(self.checklist):
+                    self.checklist[idx]["done"] = True
+                    console.print(f"[green]OK {self.checklist[idx][chr(34)+chr(116)+chr(97)+chr(115)+chr(107)+chr(34)]}[/green]")
+                else:
+                    console.print("[red]Invalid index[/red]")
+            elif action == "rm" and len(parts) > 2:
+                idx = int(parts[2]) - 1
+                if 0 <= idx < len(self.checklist):
+                    removed = self.checklist.pop(idx)
+                    console.print(f"[yellow]Removed: {removed[chr(34)+chr(116)+chr(97)+chr(115)+chr(107)+chr(34)]}[/yellow]")
+                else:
+                    console.print("[red]Invalid index[/red]")
+            elif action == "clear":
+                self.checklist.clear()
+                console.print("[yellow]Checklist cleared[/yellow]")
+            else:
+                if not self.checklist:
+                    console.print("[dim]Checklist is empty.[/dim]")
+                else:
+                    for i, item in enumerate(self.checklist, 1):
+                        mark = "OK" if item["done"] else "  "
+                        style = "green" if item["done"] else "yellow"
+                        console.print(f"  [{style}]{i}. [{mark}] {item[chr(34)+chr(116)+chr(97)+chr(115)+chr(107)+chr(34)]}[/{style}]")
+        elif cmd == "/compact":
+            before = len(self.session.messages)
+            self.session.messages = compact_messages(
+                self.session.messages, self.provider
+            )
+            after = len(self.session.messages)
+            console.print(f"[green]Compacted: {before} → {after} messages[/green]")
+        elif cmd == "/plan":
+            console.print("[bold cyan]Neural Plan[/bold cyan]")
+            console.print("  [dim]Agent will plan before executing complex tasks.[/dim]")
+            console.print("  [dim]Create a checklist with items like:[/dim]")
+            console.print("  [green]  • Step 1: do this[/green]")
+            console.print("  [green]  • Step 2: do that[/green]")
+            console.print("  [dim]To track progress, use exec_shell to update a checklist file.[/dim]")
         elif cmd.startswith("/session"):
             parts = cmd.split(maxsplit=1)
             sub = parts[1].strip() if len(parts) > 1 else ""
