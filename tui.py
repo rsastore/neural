@@ -815,6 +815,17 @@ class NeuralTUI:
                 console.print("[dim]Tip: /hf search qwen 3b to find bigger models[/dim]")
             except Exception as e:
                 console.print(f"[red]Error: {e}[/red]")
+        elif cmd == "/vectordb":
+            try:
+                from vectordb import add_from_knowledge, search
+                console.print("[bold cyan]Vector Database[/bold cyan]")
+                console.print("Rebuilding vector index from knowledge...")
+                n = add_from_knowledge("knowledge")
+                console.print(f"[green]Indexed {n} documents with embeddings[/green]")
+                console.print("[dim]Using nomic-embed-text via Ollama[/dim]")
+                console.print("[dim]Total: 768-d vectors[/dim]")
+            except Exception as e:
+                console.print(f"[red]Error: {e}[/red]")
         elif cmd == "/plugins":
             try:
                 from plugin_loader import list_loaded, list_tools as plt

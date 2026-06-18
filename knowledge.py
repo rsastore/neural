@@ -69,13 +69,39 @@ def search_knowledge(query, k=5):
     docs += [f"{s['name']}: {s['pattern']}" for s in skills]
     if not docs:
         return ""
+    
+    # BM25 search
     bm = BM25(docs)
-    results = bm.search(query, k)
-    if not results:
-        return ""
+    bm_results = bm.search(query, k)
+    
+    # Vector search (if available)
+    vector_results = []
+    try:
+        from vectordb import search as vec_search
+        vector_results = vec_search(query, k)
+    except Exception:
+        pass
+    
+    # Hybrid: combine both results
+    seen = set()
+    combined = []
+    
+    for sc, doc in bm_results:
+        if doc not in seen:
+            combined.append((sc, doc, "bm25"))
+            seen.add(doc)
+    
+    for sim, doc, meta in vector_results:
+        if doc not in seen:
+            combined.append((sim, doc, "vector"))
+            seen.add(doc)
+    
+    combined.sort(key=lambda x: -x[0])
+    
     lines = ["## Knowledge Context"]
-    for sc, doc in results:
-        lines.append(f"[rel:{sc:.2f}] {doc}")
+    for score, doc, method in combined[:k]:
+        tag = "🔤" if method == "bm25" else "🧠"
+        lines.append(f"[{tag}{score:.2f}] {doc}")
     return "\n".join(lines)
 
 def learn_from_interaction(usr, out, tool_history, success=True):
