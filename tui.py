@@ -150,7 +150,7 @@ class NeuralTUI:
         while True:
             try:
                 user_input = session.prompt(
-                    HTML("<style prompt>┃ </style>"),
+                    [("class:prompt", " \u2502 ")],
                     style=style,
                 ).strip()
             except (EOFError, KeyboardInterrupt):
@@ -199,6 +199,9 @@ class NeuralTUI:
 - `/status` — Show session info
 - `/tools` — List available tools
 - `/history` — Show recent sessions
+- `/session list` — List all sessions
+- `/session load <name>` — Load a session
+- `/session rm <name>` — Delete a session
 - `/save` — Force save session
             """
             console.print(Markdown(help_text))
@@ -227,7 +230,48 @@ class NeuralTUI:
                 console.print("[dim]No saved sessions.[/dim]")
             else:
                 for s in sessions[-5:]:
-                    console.print(f"  [dim]{s.name}[/dim]")
+                    size = s.stat().st_size
+                    console.print(f"  [dim]{s.name} ({size} bytes)[/dim]")
+        elif cmd.startswith("/session"):
+            parts = cmd.split(maxsplit=1)
+            sub = parts[1].strip() if len(parts) > 1 else ""
+            if not sub or sub == "list":
+                sessions = sorted(self.sessions_dir.glob("*.json"), reverse=True)
+                if not sessions:
+                    console.print("[dim]No saved sessions.[/dim]")
+                else:
+                    console.print("[bold]Saved sessions:[/bold]")
+                    for i, s in enumerate(sessions[:10], 1):
+                        size = s.stat().st_size
+                        ts = s.stem.replace("session_", "").replace("_", " ")[:16]
+                        console.print(f"  {i}. [cyan]{s.name}[/cyan] ({ts})")
+            elif sub.startswith("load "):
+                name = sub[5:].strip()
+                path = self.sessions_dir / name
+                if not path.exists():
+                    path = self.sessions_dir / f"{name}.json"
+                if not path.exists():
+                    console.print(f"[red]Session not found: {name}[/red]")
+                else:
+                    import json
+                    data = json.loads(path.read_text())
+                    if "messages" in data:
+                        self.session._messages = data["messages"]
+                        console.print(f"[green]Loaded {len(data['messages'])} messages from {name}[/green]")
+                    else:
+                        console.print("[red]Invalid session file[/red]")
+            elif sub.startswith("rm "):
+                name = sub[3:].strip()
+                path = self.sessions_dir / name
+                if not path.exists():
+                    path = self.sessions_dir / f"{name}.json"
+                if path.exists():
+                    path.unlink()
+                    console.print(f"[green]Deleted: {name}[/green]")
+                else:
+                    console.print(f"[red]Not found: {name}[/red]")
+            else:
+                console.print("[yellow]Usage: /session [list|load <name>|rm <name>][/yellow]")
         elif cmd == "/save":
             path = self.sessions_dir / f"manual_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             data = {
