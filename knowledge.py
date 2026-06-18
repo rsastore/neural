@@ -156,7 +156,7 @@ def search_knowledge(query, k=5):
     
     lines = ["## Knowledge Context"]
     for score, doc, method in combined[:k]:
-        tag = "🔤" if method == "bm25" else "🧠"
+        tag = "🔤" if method == "bm25" else ("🧠" if method == "vector" else "📦")
         lines.append(f"[{tag}{score:.2f}] {doc}")
     return "\n".join(lines)
 
