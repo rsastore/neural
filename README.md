@@ -42,6 +42,38 @@ python3 neural.py
 > Note: On macOS, Neural auto-detects `.zsh_history` and works with
 > Homebrew-installed Ollama, Docker Desktop, and GitHub CLI.
 
+
+## Platform Support
+
+| Platform | Status | Install |
+|----------|--------|---------|
+| **Linux** (Debian/Ubuntu) | ✅ Primary | `install.sh` |
+| **macOS** | ✅ | `brew install python3 ollama` |
+| **Windows** | ✅ (beta) | `install.ps1` |
+| **Android** (Termux) | ✅ | Manual setup |
+
+### Windows
+```powershell
+# PowerShell (Admin)
+pip install prompt_toolkit rich requests
+git clone https://github.com/rsastore/rsa-agentic.git
+cd rsa-agentic
+python neural.py
+```
+
+> Note: exec_shell uses cmd.exe on Windows.
+> Install Ollama for Windows from https://ollama.com/download/windows
+
+### Android (Termux)
+```bash
+pkg install git python
+pip install prompt_toolkit rich requests
+git clone https://github.com/rsastore/rsa-agentic.git
+cd rsa-agentic && python neural.py
+```
+
+No root required. Runs in Termux with local models via llama.cpp.
+
 ## Features
 
 | Area | Feature | Description |

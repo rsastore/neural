@@ -10,11 +10,11 @@ PERSONAS = {
 }
 
 def get_terminal_context():
-    import datetime
+    import datetime, platform
     parts = []
     parts.append("Time: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
-    parts.append(f"OS: {os.uname().sysname} {os.uname().release}")
-    parts.append(f"Host: {os.uname().nodename}")
+    parts.append(f"OS: {platform.system()} {platform.release()}")
+    parts.append(f"Host: {platform.node()}")
     parts.append(f"CWD: {os.getcwd()}")
     return "\n".join(parts)
 
