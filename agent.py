@@ -5,6 +5,7 @@ from typing import Callable
 from tools.builtin import get_tool, tool_descriptions, list_tools, BUILTIN_TOOLS
 from knowledge import search_knowledge, learn_from_interaction, knowledge_summary
 from context import build_context_block, persona_instruction
+from grammar import parse_tool_call as grammar_parse
 
 # ── System Prompt Builder ─────────────────────────────────────
 
@@ -79,38 +80,8 @@ class AgentSession:
         self.persona = "default"
 
     def _extract_tool_call(self, text: str) -> dict | None:
-        """Parse tool call JSON from model response. Handles nested braces."""
-        # Try ```json ... ``` block first
-        m = re.search(r'```(?:json)?\s*\n(\{.*?\})\n\s*```', text, re.DOTALL)
-        if m:
-            try:
-                return json.loads(m.group(1))
-            except json.JSONDecodeError:
-                pass
-
-        # Try brace-counting approach
-        idx = text.find('{"tool"')
-        if idx == -1:
-            idx = text.find('{"tool"')
-        if idx == -1:
-            return None
-
-        depth = 0
-        for i in range(idx, len(text)):
-            ch = text[i]
-            if ch == '{':
-                depth += 1
-            elif ch == '}':
-                depth -= 1
-                if depth == 0:
-                    try:
-                        obj = json.loads(text[idx:i+1])
-                        if "tool" in obj:
-                            return obj
-                    except json.JSONDecodeError:
-                        pass
-                    return None
-        return None
+        """Parse tool call with grammar-guided JSON + auto-fix for local LLMs."""
+        return grammar_parse(text)
 
     def run(self, user_input: str) -> str:
         """Process user input through agent loop. Returns final answer."""

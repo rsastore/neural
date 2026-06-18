@@ -801,6 +801,20 @@ class NeuralTUI:
                         else: console.print("  [red]Not a file[/red]")
                 except KeyboardInterrupt:
                     break
+        elif cmd == "/quant":
+            try:
+                from quant import recommend_quantization, suggest_model, get_available_ram
+                ram = get_available_ram()
+                console.print(f"[bold cyan]Hardware Analysis[/bold cyan]")
+                console.print(f"  RAM available: {ram:.1f} GB")
+                for size in ["1.5b", "3b", "7b"]:
+                    rec = recommend_quantization(size)
+                    if "error" not in rec:
+                        console.print(f"  {size:<6} → {rec['recommended']:>2} ({rec['model_size_gb']:.1f} GB)")
+                console.print(f"\n[bold]Best model:[/bold] {suggest_model()}")
+                console.print("[dim]Tip: /hf search qwen 3b to find bigger models[/dim]")
+            except Exception as e:
+                console.print(f"[red]Error: {e}[/red]")
         elif cmd == "/plugins":
             try:
                 from plugin_loader import list_loaded, list_tools as plt
