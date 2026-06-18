@@ -85,6 +85,7 @@ def create_provider(config: dict) -> ModelProvider:
     prov_cfg = config.get(prov_name, {})
     m = config.get("model_name", "")
     prov_cfg["model_name"] = m
+    prov_cfg["model"] = prov_cfg.get("model", config.get("model_name") or "gpt-4o")
     prov_cfg["temperature"] = config.get("temperature", 0.3)
     prov_cfg["max_tokens"] = config.get("max_tokens", 4096)
 
@@ -92,5 +93,90 @@ def create_provider(config: dict) -> ModelProvider:
         return OllamaProvider(prov_cfg)
     elif prov_name == "openai":
         return OpenAIProvider(prov_cfg)
+    elif prov_name == "anthropic":
+        return AnthropicProvider(prov_cfg)
+    elif prov_name == "google":
+        return GoogleProvider(prov_cfg)
+    elif prov_name in config.get("model", {}):
+        # Try OpenAI-compatible for unknown providers
+        prov_cfg["model"] = prov_cfg.get("model", "gpt-4o")
+        return OpenAIProvider(prov_cfg)
     else:
         raise ValueError(f"Unknown provider: {prov_name}")
+
+
+class AnthropicProvider(ModelProvider):
+    def __init__(self, config: dict):
+        self.api_key = config.get("api_key", "")
+        self.model = config.get("model", "claude-sonnet-4-20250514")
+        self.temperature = config.get("temperature", 0.3)
+        self.max_tokens = config.get("max_tokens", 4096)
+
+    @property
+    def name(self) -> str:
+        return f"Anthropic/{self.model}"
+
+    def chat(self, messages, **kw) -> str:
+        from anthropic import Anthropic
+        cl = Anthropic(api_key=self.api_key)
+        r = cl.messages.create(
+            model=self.model,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            messages=[m for m in messages if m["role"] != "system"],
+            system="\n".join(m["content"] for m in messages if m["role"] == "system"),
+        )
+        return r.content[0].text if r.content else ""
+
+    def chat_stream(self, messages, **kw):
+        from anthropic import Anthropic
+        cl = Anthropic(api_key=self.api_key)
+        with cl.messages.stream(
+            model=self.model,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            messages=[m for m in messages if m["role"] != "system"],
+            system="\n".join(m["content"] for m in messages if m["role"] == "system"),
+        ) as s:
+            for text in s.text_stream:
+                yield text
+
+
+class GoogleProvider(ModelProvider):
+    def __init__(self, config: dict):
+        self.api_key = config.get("api_key", "")
+        self.model = config.get("model", "gemini-2.0-flash")
+        self.temperature = config.get("temperature", 0.3)
+
+    @property
+    def name(self) -> str:
+        return f"Google/{self.model}"
+
+    def chat(self, messages, **kw) -> str:
+        import google.generativeai as genai
+        genai.configure(api_key=self.api_key)
+        model = genai.GenerativeModel(self.model)
+        # Convert messages
+        history = []
+        for m in messages[:-1]:
+            if m["role"] in ("user", "assistant"):
+                history.append({"role": m["role"], "parts": [m["content"]]})
+        prompt = messages[-1]["content"] if messages else ""
+        chat = model.start_chat(history=history) if history else model
+        r = chat.send_message(prompt)
+        return r.text
+
+    def chat_stream(self, messages, **kw):
+        import google.generativeai as genai
+        genai.configure(api_key=self.api_key)
+        model = genai.GenerativeModel(self.model)
+        history = []
+        for m in messages[:-1]:
+            if m["role"] in ("user", "assistant"):
+                history.append({"role": m["role"], "parts": [m["content"]]})
+        prompt = messages[-1]["content"] if messages else ""
+        chat = model.start_chat(history=history) if history else model
+        r = chat.send_message(prompt, stream=True)
+        for chunk in r:
+            if chunk.text:
+                yield chunk.text

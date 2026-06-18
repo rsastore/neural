@@ -24,6 +24,14 @@ api_key = ""
 base_url = "https://api.openai.com/v1"
 model = "gpt-4o"
 
+[model.anthropic]
+api_key = ""
+model = "claude-sonnet-4-20250514"
+
+[model.google]
+api_key = ""
+model = "gemini-2.0-flash"
+
 [agent]
 max_tool_iters = 15
 system_prompt_file = "system.md"
