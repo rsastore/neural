@@ -416,6 +416,64 @@ class NeuralTUI:
             console.print(f"[bold cyan]Terminal Context:[/bold cyan]")
             for line in ctx.split("\n")[1:]:
                 console.print(f"  [dim]{line}[/dim]")
+        elif cmd == "/models":
+            try:
+                from hf_manager import list_installed
+                models = list_installed()
+                if not models:
+                    console.print("[dim]No models installed.[/dim]")
+                    console.print("Try: /hf search <query>")
+                else:
+                    console.print("[bold cyan]Installed Models:[/bold cyan]")
+                    for m in models:
+                        backend_icon = {"ollama": "O", "gguf": "G"}.get(m["backend"], "?")
+                        console.print(f"  [{backend_icon}] {m['name']:<30} {m['size']:>8}")
+            except Exception as e:
+                console.print(f"[red]Error: {e}[/red]")
+        elif cmd.startswith("/hf search "):
+            query = cmd[11:].strip()
+            if not query:
+                console.print("[yellow]Usage: /hf search <query> (e.g. /hf search qwen 3b)[/yellow]")
+            else:
+                console.print(f"[bold]Searching HuggingFace for:[/bold] {query}")
+                try:
+                    from hf_manager import search_hf
+                    results = search_hf(query, limit=8)
+                    if not results:
+                        console.print("[dim]No results found.[/dim]")
+                    elif "error" in results[0]:
+                        console.print(f"[red]API error: {results[0]['error']}[/red]")
+                    else:
+                        for i, r in enumerate(results, 1):
+                            downloads = r.get("downloads", 0)
+                            dl_str = f"{downloads/1000:.0f}k" if downloads > 1000 else str(downloads)
+                            console.print(f"  {i}. [cyan]{r['id']}[/cyan] [dim]{dl_str} downloads[/dim]")
+                        console.print("\nUse: /hf pull <number> to install")
+                except Exception as e:
+                    console.print(f"[red]Error: {e}[/red]")
+        elif cmd.startswith("/hf pull "):
+            query = cmd[9:].strip()
+            if not query:
+                console.print("[yellow]Usage: /hf pull <model-id> or number from search[/yellow]")
+            else:
+                console.print(f"[bold]Installing:[/bold] {query}")
+                try:
+                    from hf_manager import pull_model
+                    for msg in pull_model(query):
+                        console.print(msg)
+                except Exception as e:
+                    console.print(f"[red]Error: {e}[/red]")
+        elif cmd.startswith("/model "):
+            model_name = cmd[7:].strip()
+            if not model_name:
+                console.print("[yellow]Usage: /model <name> (e.g. /model qwen2.5:1.5b)[/yellow]")
+            else:
+                try:
+                    from hf_manager import use_model
+                    result = use_model(model_name)
+                    console.print(f"[green]{result}[/green]")
+                except Exception as e:
+                    console.print(f"[red]Error: {e}[/red]")
         elif cmd == "/plugins":
             try:
                 from plugin_loader import list_loaded, list_tools as plt
