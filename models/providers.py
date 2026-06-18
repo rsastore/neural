@@ -35,15 +35,23 @@ class OllamaProvider(ModelProvider):
     def chat_stream(self, messages: list[dict], **kwargs):
         r = self._call(messages, stream=True)
         r.raise_for_status()
-        self.last_tokens = {"input": 0, "output": 0}
+        import time as _t
+        self.last_tokens = {"input": 0, "output": 0, "ttft": 0, "elapsed": 0}
+        _start = _t.time()
+        _first = True
         for line in r.iter_lines(decode_unicode=True):
             if line:
                 data = json.loads(line)
                 content = data.get("message", {}).get("content", "")
                 if content:
+                    if _first:
+                        self.last_tokens["ttft"] = _t.time() - _start
+                        _first = False
                     yield content
                 if data.get("done", False):
-                    self.last_tokens = {"input": data.get("prompt_eval_count",0), "output": data.get("eval_count",0)}
+                    self.last_tokens["elapsed"] = _t.time() - _start
+                    self.last_tokens["input"] = data.get("prompt_eval_count",0)
+                    self.last_tokens["output"] = data.get("eval_count",0)
                     break
 
 

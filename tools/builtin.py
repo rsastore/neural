@@ -195,8 +195,19 @@ def _fetch_url(url: str, max_chars: int = 5000):
 
 
 def _sandbox_exec(cmd: str, image: str = "neural-sandbox:latest"):
-    """Execute a command inside a Docker sandbox container."""
+    """Execute a command inside a Docker sandbox container.
+    Gracefully falls back to exec_shell with warning if Docker is not available.
+    """
     import subprocess
+    try:
+        subprocess.run(["docker", "ps"], capture_output=True, text=True, timeout=5)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return ("[WARNING] Docker not available. Falling back to exec_shell (unsafe).\n"
+                "To fix: install Docker or use exec_shell directly.\n"
+                "Run without sandbox: exec_shell(\"" + cmd + "\")")
+    except Exception:
+        return "Docker error. Use exec_shell directly."
+    
     try:
         r = subprocess.run(
             ["docker", "run", "--rm", "-i", "--network", "none",
@@ -210,8 +221,6 @@ def _sandbox_exec(cmd: str, image: str = "neural-sandbox:latest"):
             if r.stderr:
                 out += f"\nSTDERR: {r.stderr[:500]}"
         return out
-    except FileNotFoundError:
-        return "Error: Docker not found. Use exec_shell directly."
     except subprocess.TimeoutExpired:
         return "Error: Command timed out in sandbox."
     except Exception as e:

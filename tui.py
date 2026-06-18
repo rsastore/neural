@@ -741,6 +741,16 @@ class NeuralTUI:
                 console.print(f"  Input:     {inp:,} tokens")
                 console.print(f"  Output:    {out:,} tokens")
                 console.print(f"  Total:     {inp+out:,} tokens")
+                # Show timing if available
+                try:
+                    t = getattr(self.provider, "last_tokens", {})
+                    ttft = t.get("ttft", 0)
+                    elapsed = t.get("elapsed", 0)
+                    if ttft:
+                        console.print(f"  TTFT:      {ttft:.2f}s")
+                    if elapsed:
+                        console.print(f"  Elapsed:   {elapsed:.2f}s")
+                except: pass
                 console.print(f"  Messages:  {len(self.session.messages)}")
                 try:
                     from db import log_cost
