@@ -8,6 +8,8 @@ KDIR.mkdir(parents=True, exist_ok=True)
 
 # ── Bundled metadata & dataset ─────────────────────────────
 _BUNDLED = None
+_FACTS_CACHE = None
+_SKILLS_CACHE = None
 
 def _load_bundled():
     global _BUNDLED
@@ -119,6 +121,7 @@ def add_fact(topic, content, source=""):
     facts.append({"topic": topic, "content": content,
                   "source": source, "created": time.time()})
     _save("facts.json", facts)
+    global _FACTS_CACHE; _FACTS_CACHE = facts
     return f"Learned: {topic}"
 
 def add_skill(name, pattern, tool, args_tmpl):
@@ -128,6 +131,7 @@ def add_skill(name, pattern, tool, args_tmpl):
     skills.append({"name": name, "pattern": pattern, "tool": tool,
                    "args_tmpl": args_tmpl, "created": time.time(), "ok": 1})
     _save("skills.json", skills)
+    global _SKILLS_CACHE; _SKILLS_CACHE = skills
 
 def search_knowledge(query, k=5):
     facts = get_facts()

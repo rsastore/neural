@@ -6,11 +6,16 @@ from pathlib import Path
 MEM_DIR = Path(__file__).parent / "memory"
 MEM_DIR.mkdir(parents=True, exist_ok=True)
 
+_WORKING_CACHE = None
+_EPISODIC_CACHE = None
+_PREF_CACHE = None
+
 # ── Working Memory (mid-conversation scratchpad) ──
 
 WORKING_FILE = MEM_DIR / "working.json"
 
 def init_working():
+    global _WORKING_CACHE
     """Initialize or reset working memory for a new session."""
     data = {
         "key_facts": [],
