@@ -6,6 +6,44 @@ from collections import Counter
 KDIR = Path(__file__).parent / "knowledge"
 KDIR.mkdir(parents=True, exist_ok=True)
 
+# ── Bundled metadata & dataset ─────────────────────────────
+_BUNDLED = None
+
+def _load_bundled():
+    global _BUNDLED
+    if _BUNDLED is not None:
+        return _BUNDLED
+    import json
+    ds_dir = Path(__file__).parent / "datasets"
+    meta_file = ds_dir / "metadata.json"
+    ds_file = ds_dir / "tool_calling.json"
+    meta = json.loads(meta_file.read_text()) if meta_file.exists() else []
+    data = json.loads(ds_file.read_text()) if ds_file.exists() else []
+    _BUNDLED = {"metadata": meta, "dataset": data}
+    return _BUNDLED
+
+def get_bundled_stats():
+    b = _load_bundled()
+    return f"Bundled: {len(b['metadata'])} metadata + {len(b['dataset'])} dataset samples"
+
+def search_bundled(query, k=5):
+    """Search bundled metadata for matching intents."""
+    b = _load_bundled()
+    if not b["metadata"]:
+        return []
+    q = query.lower()
+    from knowledge import BM25
+    docs = [m["intent"] + " " + " ".join(m.get("tags", [])) for m in b["metadata"]]
+    bm = BM25(docs)
+    results = bm.search(q, k)
+    if not results or not results[0]:
+        return []
+    matched = []
+    for score, doc in results:
+        idx = docs.index(doc)
+        matched.append((score, b["metadata"][idx]))
+    return matched
+
 import threading as _threading
 _lock = _threading.Lock()
 
