@@ -34,6 +34,79 @@ class Tool:
 
 # ── Built-in Tools ────────────────────────────────────────────
 
+
+
+# ── GitHub Tools ──
+
+def _github_issue(repo: str, title: str, body: str = ""):
+    """Create a GitHub issue."""
+    import subprocess, os
+    try:
+        r = subprocess.run(["gh","issue","create","--repo",repo,"--title",title,"--body",body],
+                          capture_output=True, text=True, timeout=30)
+        if r.returncode == 0: return f"Issue created: {r.stdout.strip()}"
+        return f"Error: {r.stderr[:200]}"
+    except FileNotFoundError:
+        return "GitHub CLI (gh) not installed. Install: apt install gh && gh auth login"
+    except Exception as e:
+        return f"Error: {e}"
+
+def _github_pr(repo: str, title: str, body: str = "", base: str = "main", head: str = ""):
+    """Create a GitHub PR."""
+    import subprocess
+    try:
+        cmd = ["gh","pr","create","--repo",repo,"--title",title,"--body",body,"--base",base]
+        if head: cmd += ["--head", head]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        if r.returncode == 0: return f"PR created: {r.stdout.strip()}"
+        return f"Error: {r.stderr[:200]}"
+    except FileNotFoundError:
+        return "GitHub CLI (gh) not installed."
+    except Exception as e:
+        return f"Error: {e}"
+
+def _github_search(query: str):
+    """Search GitHub repos."""
+    import subprocess
+    try:
+        r = subprocess.run(["gh","search","repos",query,"--limit","5"], capture_output=True, text=True, timeout=15)
+        return r.stdout[:2000] if r.stdout else r.stderr[:200]
+    except: return "GitHub CLI not installed."
+
+
+# ── Fine-tuning Tool ──
+
+def _fine_tune(dataset: str, model_name: str = "qwen2.5:1.5b", output: str = ""):
+    "Generate a fine-tuning script using Unsloth."
+    import os
+    output = output or os.path.expanduser("~/rsa-agentic/models/ft")
+    script = (
+        "import json, os, sys\n"
+        "try:\n"
+        "    from unsloth import FastLanguageModel\n"
+        "    import torch\n"
+        "    from datasets import Dataset\n"
+        "    from trl import SFTTrainer\n"
+        "    from transformers import TrainingArguments\n"
+        f"    data_path = \"{dataset}\"\n"
+        "    with open(data_path) as f:\n"
+        "        if data_path.endswith('.jsonl'):\n"
+        "            data = [json.loads(l) for l in f]\n"
+        "        else: data = json.load(f)\n"
+        f"    model, tokenizer = FastLanguageModel.from_pretrained(\"{model_name}\", max_seq_length=2048, load_in_4bit=True)\n"
+        "    model = FastLanguageModel.get_peft_model(model, r=16, lora_alpha=16, target_modules=['q_proj','k_proj','v_proj','o_proj'], lora_dropout=0, bias='none')\n"
+        "    trainer = SFTTrainer(model=model, tokenizer=tokenizer, train_dataset=Dataset.from_list(data),\n"
+        f"        args=TrainingArguments(output_dir=\"{output}\", per_device_train_batch_size=2, num_train_epochs=1, logging_steps=10, save_steps=100, learning_rate=2e-4))\n"
+        "    trainer.train()\n"
+        "    model.save_pretrained(output_dir)\n"
+        "    print('Fine-tuning complete!')\n"
+        "except ImportError:\n"
+        "    print('Install: pip install unsloth transformers datasets trl')\n"
+    )
+    ft_path = os.path.expanduser("~/rsa-agentic/ft_script.py")
+    with open(ft_path, 'w') as f:
+        f.write(script)
+    return f"Fine-tuning script: {ft_path}\nRun: python3 {ft_path} (requires GPU)"
 DESTRUCTIVE_PATTERNS = ["rm -rf", "rm -fr", "mkfs", "dd if=", "> /dev/sd", "chmod -R 777", 
                      "wget -O /", "curl -o /", "mv /* ", ":(){ :|:& };:", "git push --force"]
 
@@ -234,6 +307,22 @@ BUILTIN_TOOLS = [
     Tool("git_commit", _git_commit,
          "Stage all files and commit.",
          {"message": "commit message", "path": "repo path (default .)"}),
+
+    Tool("github_issue", _github_issue,
+         "Create a GitHub issue (requires gh CLI installed).",
+         {"repo": "owner/repo", "title": "issue title", "body": "description (optional)"}),
+
+    Tool("github_pr", _github_pr,
+         "Create a GitHub pull request (requires gh CLI).",
+         {"repo": "owner/repo", "title": "PR title", "body": "description", "base": "base branch", "head": "head branch (optional)"}),
+
+    Tool("github_search", _github_search,
+         "Search GitHub repos.",
+         {"query": "search query"}),
+
+    Tool("fine_tune", _fine_tune,
+         "Generate a fine-tuning script for a model.",
+         {"dataset": "path to dataset (JSONL or JSON)", "model_name": "base model name", "output": "output dir (optional)"}),
 
     Tool("git_log", _git_log,
          "Show recent git commits.",

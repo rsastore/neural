@@ -722,41 +722,85 @@ class NeuralTUI:
                     console.print(f"  [dim]... (truncated at 50)[/dim]")
             except Exception as e:
                 console.print(f"[red]Error: {e}[/red]")
+        elif cmd.startswith("/cost history"):
+            from db import get_cost_summary
+            rows = get_cost_summary(10)
+            console.print("[bold cyan]Cost History[/bold cyan]")
+            if not rows:
+                console.print("  [dim]No cost data yet[/dim]")
+            for r in rows:
+                console.print(f"  {r['session_id'][:8]}  {r['provider']:<15}  {r['inp']+r['out']:>6} tok  ${r['cost']:.6f}")
         elif cmd == "/cost":
             console.print(f"[bold cyan]Session Cost[/bold cyan]")
             try:
                 t = self.session.total_tokens
                 provider_name = getattr(self.provider, "name", "?")
-                console.print(f"  Provider:  {provider_name}")
                 inp = t.get("input", 0)
                 out = t.get("output", 0)
+                console.print(f"  Provider:  {provider_name}")
                 console.print(f"  Input:     {inp:,} tokens")
                 console.print(f"  Output:    {out:,} tokens")
                 console.print(f"  Total:     {inp+out:,} tokens")
-                # Cost estimates per 1M tokens
-                rates = {
-                    "gpt-4o": (2.50, 10.00),
-                    "gpt-4o-mini": (0.15, 0.60),
-                    "claude": (3.00, 15.00),
-                    "gemini": (0.10, 0.40),
-                    "deepseek": (0.14, 0.28),
-                    "qwen": (0.0, 0.0),
-                    "llama": (0.0, 0.0),
-                }
-                pname = provider_name.lower()
-                est = 0.0
-                for key, (r_in, r_out) in rates.items():
-                    if key in pname:
-                        est = (inp/1000000*r_in + out/1000000*r_out)
-                        break
-                if est > 0:
-                    console.print(f"  Est cost:  ${est:.6f}")
-                else:
-                    console.print(f"  Cost:      [green]local (free)[/green]")
-                # Messages count
                 console.print(f"  Messages:  {len(self.session.messages)}")
-            except Exception as e:
+                try:
+                    from db import log_cost
+                    log_cost(self.session.session_id, provider_name, inp, out, 0.0)
+                except: pass
+            except:
                 console.print(f"  [dim]No session data[/dim]")
+        elif cmd.startswith("/schedule add"):
+            parts = cmd.split(maxsplit=2)
+            if len(parts) < 3:
+                console.print("[yellow]Usage: /schedule add <name> <goal>[/yellow]")
+            else:
+                from db import add_task
+                add_task(parts[1], "manual", parts[2])
+                console.print(f"[green]Scheduled: {parts[1]}[/green]")
+        elif cmd.startswith("/schedule run"):
+            from db import get_due_tasks
+            tasks = get_due_tasks()
+            if not tasks:
+                console.print("[dim]No tasks[/dim]")
+            else:
+                for t in tasks:
+                    console.print(f"  [cyan]●[/cyan] {t['name']}: running...")
+                    self.session.run(t["goal"])
+                    console.print(f"  [green]  OK[/green]")
+        elif cmd == "/schedule":
+            from db import get_due_tasks
+            tasks = get_due_tasks()
+            console.print("[bold cyan]Scheduled Tasks[/bold cyan]")
+            if not tasks:
+                console.print("  [dim]None. Add: /schedule add backup Backup data[/dim]")
+            for t in tasks:
+                console.print(f"  {t['name']:<20} {t['goal'][:60]}")
+        elif cmd == "/explorer":
+            import subprocess
+            cwd = os.getcwd()
+            console.print("[bold cyan]File Explorer[/bold cyan]")
+            console.print(f"  [dim]CWD: {cwd}[/dim]")
+            console.print("  [green]ls <path>[/green] | [green]cat <file>[/green] | [green]up[/green] | [green]q[/green]")
+            cur = cwd
+            while True:
+                try:
+                    ans = console.input(f"  [cyan]{cur}> [/cyan]").strip()
+                    if ans == "q": break
+                    if ans == "up": cur = os.path.dirname(cur); continue
+                    if ans.startswith("ls "):
+                        ap = os.path.join(cur, ans[3:].strip())
+                        if os.path.isdir(ap):
+                            for item in os.listdir(ap)[:25]:
+                                icon = "📁" if os.path.isdir(os.path.join(ap,item)) else "📄"
+                                console.print(f"    {icon} {item}")
+                            cur = ap
+                        else: console.print("  [red]Not a dir[/red]")
+                    elif ans.startswith("cat "):
+                        ap = os.path.join(cur, ans[4:].strip())
+                        if os.path.isfile(ap):
+                            console.print(open(ap).read()[:1500])
+                        else: console.print("  [red]Not a file[/red]")
+                except KeyboardInterrupt:
+                    break
         elif cmd == "/plugins":
             try:
                 from plugin_loader import list_loaded, list_tools as plt
