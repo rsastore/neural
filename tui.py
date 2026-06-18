@@ -228,6 +228,7 @@ class NeuralTUI:
 - `/forget` — Clear all learned knowledge
 - `/persona` — Show current mode
 - `/persona <mode>` — Switch mode (coder, sysadmin, research, default)
+- `/reference <url>` — Analyze a GitHub repo and compare with Neural
 - `/context` — Show terminal context
 - `/plan` — Show planning mode
 - `/plugins` — List loaded plugins & tools
@@ -377,6 +378,19 @@ class NeuralTUI:
                 with open(p, "w") as fh:
                     json.dump([], fh)
             console.print("[yellow]Knowledge cleared.[/yellow]")
+        elif cmd.startswith("/reference "):
+            url = cmd[11:].strip()
+            if not url:
+                console.print("[yellow]Usage: /reference <github-url>[/yellow]")
+            else:
+                console.print(f"[bold cyan]Analyzing:[/bold cyan] {url}")
+                try:
+                    from reference import analyze, report
+                    data = analyze(url)
+                    result = report(data)
+                    console.print(result)
+                except Exception as e:
+                    console.print(f"[red]Error: {e}[/red]")
         elif cmd.startswith("/persona"):
             parts = cmd.split(maxsplit=1)
             pname = parts[1].strip() if len(parts) > 1 else ""

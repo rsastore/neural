@@ -10,5 +10,11 @@
     "content": "Use df -h for disk, free -h for RAM, top for processes",
     "source": "system",
     "created": 1781797019.0514235
+  },
+  {
+    "topic": "Ref:block/goose",
+    "content": "22000stars Rust shared:3 features",
+    "source": "reference",
+    "created": 1781797509.7518458
   }
 ]
