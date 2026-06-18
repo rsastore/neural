@@ -1,9 +1,13 @@
-"""Grammar-guided JSON: auto-fix tool calling from local LLMs."""
+"""Grammar-guided JSON parser."""
 import re, json
 
 COMMON_FIXES = [
+    (r',(\s*[}\]])', r'\1'),
+    (r'\s*:', ':'),
+    (r'\bTrue\b', 'true'),
+    (r'\bFalse\b', 'false'),
+    (r'\bNone\b', 'null'),
     (r':\s*:', ':'),
-    (r',\s*\}', '}'),
 ]
 
 def extract_json(text):
@@ -15,9 +19,10 @@ def extract_json(text):
         depth = 0
         for i in range(start, len(text)):
             if text[i] == '{': depth += 1
-            elif text[i] == '}': depth -= 1
-            if depth == 0: return text[start:i+1]
-    return ""
+            elif text[i] == '}':
+                depth -= 1
+                if depth == 0: return text[start:i+1]
+    return ''
 
 def auto_fix(text):
     for pat, repl in COMMON_FIXES:
@@ -29,11 +34,11 @@ def parse_tool_call(text):
     if not js: return None
     try:
         d = json.loads(js)
-        if "tool" in d: return d
+        if 'tool' in d: return d
     except: pass
     try:
         d = json.loads(auto_fix(js))
-        if "tool" in d: return d
+        if 'tool' in d: return d
     except: pass
     tm = re.search(r'"tool"\s*:\s*"([^"]+)"', js)
     am = re.search(r'"args"\s*:\s*(\{[^}]+\})', js)
@@ -42,5 +47,5 @@ def parse_tool_call(text):
         if am:
             try: args = json.loads(am.group(1))
             except: pass
-        return {"tool": tm.group(1), "args": args}
+        return {'tool': tm.group(1), 'args': args}
     return None
