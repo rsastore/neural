@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable
 
 from tools.builtin import get_tool, tool_descriptions, list_tools, BUILTIN_TOOLS
+from knowledge import search_knowledge, learn_from_interaction, knowledge_summary
 
 # ── System Prompt Builder ─────────────────────────────────────
 
@@ -31,6 +32,12 @@ When the task is complete, respond with a natural language answer.
 4. For system info: exec_shell with "uname -a", "df -h", etc.
 5. Verify your results before reporting.
 """
+    try:
+        ctx = search_knowledge(custom_prompt or "")
+        if ctx:
+            base += f"\n\n{ctx}"
+    except:
+        pass
     if custom_prompt:
         base += f"\n\n## Additional Instructions\n{custom_prompt}"
     return base
@@ -170,6 +177,14 @@ class AgentSession:
             call = self._extract_tool_call(raw)
             if call is None:
                 self._messages.append({"role": "assistant", "content": raw})
+                # Auto-learn from this interaction
+                try:
+                    for msg in self._messages:
+                        if msg["role"] == "user":
+                            learn_from_interaction(msg["content"], raw, [])
+                            break
+                except:
+                    pass
                 yield {"type": "final", "content": raw}
                 return
             tool_name = call.get("tool", "")

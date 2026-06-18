@@ -1,0 +1,12 @@
+[
+  {
+    "name": "check_disk",
+    "pattern": "How much disk is used?",
+    "tool": "exec_shell",
+    "args_tmpl": {
+      "cmd": "df -h"
+    },
+    "created": 1781797019.0516555,
+    "ok": 1
+  }
+]

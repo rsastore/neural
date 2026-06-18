@@ -224,6 +224,8 @@ class NeuralTUI:
 - `/status` — Show session info
 - `/tools` — List available tools
 - `/compact` — Compact long context (summarize old messages)
+- `/knowledge` — Show what Neural has learned
+- `/forget` — Clear all learned knowledge
 - `/plan` — Show planning mode
 - `/plugins` — List loaded plugins & tools
 - `/checklist` — Show tasks
@@ -349,6 +351,29 @@ class NeuralTUI:
             console.print("[bold cyan]Neural Planner[/bold cyan]")
             console.print("  [dim]Usage: /plan <goal>[/dim]")
             console.print("  [dim]Example: /plan cek disk usage dan laporan[/dim]")
+        elif cmd == "/knowledge":
+            try:
+                from knowledge import knowledge_summary, get_facts, get_skills
+                console.print(f"[bold cyan]{knowledge_summary()}[/bold cyan]")
+                facts = get_facts()
+                if facts:
+                    console.print("\n[bold]Facts:[/bold]")
+                    for f in facts[-5:]:
+                        console.print(f"  [dim]{f['topic']}[/dim]: {f['content'][:80]}...")
+                skills = get_skills()
+                if skills:
+                    console.print("\n[bold]Skills:[/bold]")
+                    for s in skills[-3:]:
+                        console.print(f"  [dim]{s['name']}[/dim]: {s['pattern'][:60]}...")
+            except ImportError:
+                console.print("[dim]Knowledge system not available.[/dim]")
+        elif cmd == "/forget":
+            import json, os
+            for f in ["facts.json", "skills.json"]:
+                p = os.path.expanduser(f"~/neural/knowledge/{f}")
+                with open(p, "w") as fh:
+                    json.dump([], fh)
+            console.print("[yellow]Knowledge cleared.[/yellow]")
         elif cmd == "/plugins":
             try:
                 from plugin_loader import list_loaded, list_tools as plt
