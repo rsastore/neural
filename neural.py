@@ -10,6 +10,12 @@ Usage:
 import sys, os, json, argparse
 from pathlib import Path
 
+# Python 3.10 compatibility
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # pip install tomli
+
 def main():
     # Check first-run: warn if no providers configured
     import tomllib
