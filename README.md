@@ -22,6 +22,26 @@ python3 neural.py
 /provider set openai
 python3 neural.py
 ```
+
+## macOS Setup
+
+```bash
+# Install dependencies
+brew install python3 ollama gh
+pip3 install prompt_toolkit rich requests
+
+# Pull a model
+ollama pull qwen2.5:1.5b
+
+# Clone & run
+git clone https://github.com/rsastore/rsa-agentic.git
+cd rsa-agentic
+python3 neural.py
+```
+
+> Note: On macOS, Neural auto-detects `.zsh_history` and works with
+> Homebrew-installed Ollama, Docker Desktop, and GitHub CLI.
+
 ## Features
 
 | Area | Feature | Description |
