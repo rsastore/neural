@@ -27,7 +27,6 @@ def main():
         pass
 
     # Safety: warn if running as root
-    import os
     if os.geteuid() == 0:
         print("\033[33m⚠️  Running as root — dangerous operations will NOT auto-approve!\033[0m")
         print("\033[33m   Consider creating a non-root user for regular use.\033[0m\n")
@@ -84,7 +83,8 @@ if __name__ == "__main__":
         from server import run_server
         import tomllib
         from models.providers import create_provider
-        cfg = tomllib.load(open(os.path.expanduser("~/rsa-agentic/config.toml"),"rb"))
+        cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
+        cfg = tomllib.load(open(cfg_path,"rb"))
         provider = create_provider(cfg.get("model",{}))
         run_server(provider=provider, config=cfg.get("agent",{}))
     else:
