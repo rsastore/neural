@@ -14,7 +14,7 @@ def _get_session(provider, config):
 def create_app(provider, config=None):
     from fastapi import FastAPI, HTTPException
     from fastapi.responses import StreamingResponse
-    app = FastAPI(title="Neural API")
+    app = FastAPI(title="RSA Agentic API")
     _get_session(provider, config)
 
     @app.get("/status")

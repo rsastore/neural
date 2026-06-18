@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-REPO="https://github.com/neural-ai/neural.git"
+REPO="https://github.com/rsastore/rsa-agentic.git"
 DIR="$HOME/neural"
 if [ -d "$DIR" ]; then echo "Already installed at $DIR"; exit 0; fi
 command -v git >/dev/null 2>&1 || { echo "Need git"; exit 1; }

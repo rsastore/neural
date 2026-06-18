@@ -26,7 +26,7 @@ console = Console()
 # ── Brand ──────────────────────────────────────────────────────
 BRAND = """
 ╔══════════════════════════════════════════╗
-║           Neural v0.1                    ║
+║       RSA Agentic v0.1              ║
 ║     Autonomous AI Agent — Local LLM      ║
 ╚══════════════════════════════════════════╝
 """
@@ -49,7 +49,7 @@ def bootstrap_display(provider_name: str, model_name: str, tool_count: int):
     grid.add_row("● Provider", provider_name)
     grid.add_row("● Tools", str(tool_count))
     grid.add_row("● Status", "✅ Ollama connected")
-    console.print(Panel(grid, title="[bold green]Neural[/bold green]", border_style="cyan"))
+    console.print(Panel(grid, title="[bold cyan]RSA Agentic[/bold cyan]", border_style="cyan"))
 
 # ── TUI Core ───────────────────────────────────────────────────
 class NeuralTUI:

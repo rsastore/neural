@@ -51,7 +51,7 @@ def export_to_markdown(session_path: str) -> str:
         return "Session not found."
 
     lines = [
-        f"# Neural Session — {data['timestamp']}",
+        f"# RSA Agentic Session — {data['timestamp']}",
         f"**Model:** {data['model']}",
         f"**Messages:** {data['message_count']}",
         "",

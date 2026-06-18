@@ -11,7 +11,7 @@ from context import build_context_block, persona_instruction
 def build_system_prompt(custom_prompt: str | None = None, persona: str = 'default') -> str:
     tools_desc = tool_descriptions()
 
-    base = f"""You are Neural, an autonomous AI agent.
+    base = f"""You are Neural (RSA Agentic), an autonomous AI agent.
 
 You have access to these tools:
 

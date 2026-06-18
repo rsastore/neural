@@ -1,7 +1,7 @@
 import importlib.util, sys, os, json
 from pathlib import Path
 
-PLUGIN_DIR = Path(os.path.expanduser("~/neural/plugins"))
+PLUGIN_DIR = Path(os.path.expanduser("~/rsa-agentic/plugins"))
 
 class PluginTool:
     def __init__(self, n, fn, d, p):

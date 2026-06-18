@@ -64,7 +64,7 @@ def _call_mcp(tool_name, **kwargs):
         return "\n".join(texts) if texts else json.dumps(resp["result"])
     return "MCP error"
 
-MCP_CONFIG = Path(os.path.expanduser("~/neural/plugins/mcp_servers.json"))
+MCP_CONFIG = Path(os.path.expanduser("~/rsa-agentic/plugins/mcp_servers.json"))
 if MCP_CONFIG.exists():
     try:
         servers = json.loads(MCP_CONFIG.read_text())

@@ -3,7 +3,7 @@ import json, os, re, time, math
 from pathlib import Path
 from collections import Counter
 
-KDIR = Path(os.path.expanduser("~/neural/knowledge"))
+KDIR = Path(os.path.expanduser("~/rsa-agentic/knowledge"))
 
 def _load(n):
     p = KDIR / n

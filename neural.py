@@ -16,7 +16,7 @@ def main():
     if os.geteuid() == 0:
         print("\033[33m⚠️  Running as root — dangerous operations will NOT auto-approve!\033[0m")
         print("\033[33m   Consider creating a non-root user for regular use.\033[0m\n")
-    parser = argparse.ArgumentParser(description="Neural — Autonomous AI Agent")
+    parser = argparse.ArgumentParser(description="RSA Agentic — Autonomous AI Agent")
     parser.add_argument("--cli", "-c", type=str, help="Run one-shot command (no TUI)")
     parser.add_argument("--model", "-m", type=str, help="Override model name")
     parser.add_argument("--version", "-v", action="store_true", help="Show version")
@@ -69,7 +69,7 @@ if __name__ == "__main__":
         from server import run_server
         import tomllib
         from models.providers import create_provider
-        cfg = tomllib.load(open(os.path.expanduser("~/neural/config.toml"),"rb"))
+        cfg = tomllib.load(open(os.path.expanduser("~/rsa-agentic/config.toml"),"rb"))
         provider = create_provider(cfg.get("model",{}))
         run_server(provider=provider, config=cfg.get("agent",{}))
     else:

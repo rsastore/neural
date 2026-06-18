@@ -2,8 +2,8 @@
 import os, json, urllib.request, re
 from pathlib import Path
 
-DATA_DIR = Path(os.path.expanduser("~/neural/datasets"))
-INDEX_DIR = Path(os.path.expanduser("~/neural/datasets/.index"))
+DATA_DIR = Path(os.path.expanduser("~/rsa-agentic/datasets"))
+INDEX_DIR = Path(os.path.expanduser("~/rsa-agentic/datasets/.index"))
 
 def _api_url(dataset, file_path):
     return f"https://huggingface.co/datasets/{dataset}/resolve/main/{file_path}"
@@ -118,7 +118,7 @@ def learn_from_dataset(name, limit=50):
 
 # ── Model Management ──
 
-MODELS_DIR = __import__('pathlib').Path(os.path.expanduser('~/neural/models_data'))
+MODELS_DIR = __import__('pathlib').Path(os.path.expanduser('~/rsa-agentic/models_data'))
 
 def list_installed():
     models = []
@@ -141,7 +141,7 @@ def search_hf(query, limit=10):
     import urllib.parse
     url = f'https://huggingface.co/api/models?search={urllib.parse.quote(query)}&sort=downloads&direction=-1&limit={limit}'
     try:
-        req = urllib.request.Request(url, headers={'User-Agent':'Neural'})
+        req = urllib.request.Request(url, headers={'User-Agent':'RSA-Agentic'})
         with urllib.request.urlopen(req, timeout=15) as r:
             data = json.loads(r.read())
         return [{'id': m.get('modelId', m.get('id','')), 'downloads': m.get('downloads',0)} for m in data]
@@ -165,7 +165,7 @@ def pull_model(model_id):
 
 def use_model(model_name):
     import tomllib
-    fp = os.path.expanduser('~/neural/config.toml')
+    fp = os.path.expanduser('~/rsa-agentic/config.toml')
     with open(fp, 'rb') as f:
         cfg = tomllib.load(f)
     cfg['model']['model_name'] = model_name
@@ -180,7 +180,7 @@ def search_hf_datasets(query, limit=10):
     import urllib.parse
     url = f"https://huggingface.co/api/datasets?search={urllib.parse.quote(query)}&sort=downloads&direction=-1&limit={limit}"
     try:
-        req = urllib.request.Request(url, headers={"User-Agent":"Neural"})
+        req = urllib.request.Request(url, headers={"User-Agent":"RSA-Agentic"})
         with urllib.request.urlopen(req, timeout=15) as r:
             data = json.loads(r.read())
         results = []
