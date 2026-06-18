@@ -128,13 +128,15 @@ PROJECT_ROOT = Path(__file__).parent.parent  # ~/rsa-agentic/
 
 def _read_file(path: str):
     p = Path(path)
-    if not p.exists():
-        # Try relative to project root
+    if p.exists():
+        return p.read_text(encoding="utf-8", errors="replace")
+    # Only try PROJECT_ROOT fallback for RELATIVE paths
+    if not path.startswith("/"):
         p2 = PROJECT_ROOT / path
         if p2.exists():
             return p2.read_text(encoding="utf-8", errors="replace")
         return f"File not found: {path} (tried: {p.resolve()} and {p2})"
-    return p.read_text(encoding="utf-8", errors="replace")
+    return f"File not found: {path}"
 
 SYSTEM_PATHS = ["/etc/", "/boot/", "/usr/", "/bin/", "/sbin/", "/lib/", "/var/log/"]
 
@@ -149,13 +151,16 @@ def _write_file(path: str, content: str):
 
 def _list_dir(path: str = "."):
     p = Path(path)
-    if not p.exists():
+    if p.exists():
+        items = os_mod.listdir(path)
+    elif not path.startswith("/"):
         p2 = PROJECT_ROOT / path
         if p2.exists():
-            path = str(p2)
+            items = os_mod.listdir(str(p2))
         else:
-            return f"Directory not found: {path}"
-    items = os_mod.listdir(path)
+            return f"Directory not found: {path} (tried: {p.resolve()} and {p2})"
+    else:
+        return f"Directory not found: {path}"
     lines = []
     for name in sorted(items):
         full = os_mod.path.join(path, name)
