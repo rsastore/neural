@@ -1,6 +1,13 @@
 [brand]
-name = "Neural"
+name = "RSA Agentic"
 version = "0.1.0"
+
+# ── Quick Start ──
+# 1. Local: provider = "ollama" (default, works out of box)
+# 2. OpenAI: provider = "openai", then set your API key:
+#    /provider key openai sk-xxxxxxxx
+# 3. Other: /provider add <name> <url> <key>
+#    Then: /provider set <name>
 
 [model]
 provider = "ollama"

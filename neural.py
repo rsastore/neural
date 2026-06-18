@@ -11,6 +11,21 @@ import sys, os, json, argparse
 from pathlib import Path
 
 def main():
+    # Check first-run: warn if no providers configured
+    import tomllib
+    cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
+    try:
+        with open(cfg_path, "rb") as f:
+            cfg = tomllib.load(f)
+        provider = cfg.get("model", {}).get("provider", "ollama")
+        if provider == "openai":
+            key = cfg.get("model", {}).get("openai", {}).get("api_key", "")
+            if not key:
+                print("\033[33m⚠️  OpenAI configured but no API key set!\033[0m")
+                print("\033[33m   Set it: /provider key openai sk-xxxxxxxx\033[0m\n")
+    except:
+        pass
+
     # Safety: warn if running as root
     import os
     if os.geteuid() == 0:

@@ -227,6 +227,10 @@ class NeuralTUI:
 - `/knowledge` — Show what Neural has learned
 - `/forget` — Clear all learned knowledge
 - `/persona` — Show current mode
+- `/provider` — List providers & API key status
+- `/provider set <name>` — Switch provider
+- `/provider key <name> <key>` — Set API key
+- `/provider add <name> <url> [key]` — Add custom provider
 - `/persona <mode>` — Switch mode (coder, sysadmin, research, default)
 - `/reference <url>` — Analyze a GitHub repo and compare with Neural
 - `/context` — Show terminal context
@@ -581,6 +585,75 @@ class NeuralTUI:
             console.print("  /dataset pull <name>")
             console.print("  /dataset learn <name>")
             console.print("  /dataset search <name> <query>")
+        elif cmd == "/provider":
+            import tomllib
+            cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
+            with open(cfg_path, "rb") as f:
+                cfg = tomllib.load(f)
+            current = cfg.get("model", {}).get("provider", "ollama")
+            console.print(f"[bold cyan]Current provider: {current}[/bold cyan]")
+            console.print("")
+            console.print("[bold]Available:[/bold]")
+            providers = [k for k in cfg.get("model", {}).keys() if k not in ("provider","model_name","temperature","max_tokens","ctx_size")]
+            for pv in providers:
+                pcfg = cfg.get("model", {}).get(pv, {})
+                if isinstance(pcfg, dict):
+                    has_key = bool(pcfg.get("api_key",""))
+                    key_status = "✅ key set" if has_key else "❌ no key"
+                    host = pcfg.get("host") or pcfg.get("base_url","")
+                    console.print(f"  [cyan]{pv:<10}[/cyan] {host:<30} {key_status}")
+            console.print("")
+            console.print("[dim]Usage:[/dim]")
+            console.print("  /provider set openai             Switch provider")
+            console.print("  /provider key openai sk-xxx      Set API key")
+            console.print("  /provider add myapi url key      Add custom provider")
+        elif cmd.startswith("/provider set "):
+            pname = cmd[14:].strip()
+            import tomllib, tomli_w
+            cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
+            with open(cfg_path, "rb") as f:
+                cfg = tomllib.load(f)
+            cfg["model"]["provider"] = pname
+            if pname == "openai" and not cfg["model"].get("openai",{}).get("api_key"):
+                console.print("[yellow]Warning: OpenAI key not set. Set with: /provider key openai <key>[/yellow]")
+            with open(cfg_path, "w") as f:
+                tomli_w.dump(cfg, f)
+            console.print(f"[green]Switched to provider: {pname}[/green]")
+            console.print("[dim]Restart Neural for changes to take effect.[/dim]")
+        elif cmd.startswith("/provider key "):
+            parts = cmd.split(maxsplit=2)
+            if len(parts) < 3:
+                console.print("[yellow]Usage: /provider key <provider> <api_key>[/yellow]")
+            else:
+                pname = parts[1]
+                key = parts[2]
+                import tomllib, tomli_w
+                cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
+                with open(cfg_path, "rb") as f:
+                    cfg = tomllib.load(f)
+                if pname not in cfg.get("model", {}):
+                    cfg["model"][pname] = {"api_key": ""}
+                cfg["model"][pname]["api_key"] = key
+                with open(cfg_path, "w") as f:
+                    tomli_w.dump(cfg, f)
+                console.print(f"[green]API key set for {pname}[/green]")
+        elif cmd.startswith("/provider add "):
+            parts = cmd.split(maxsplit=3)
+            if len(parts) < 3:
+                console.print("[yellow]Usage: /provider add <name> <base_url> [api_key][/yellow]")
+            else:
+                pname = parts[1]
+                url = parts[2]
+                key = parts[3] if len(parts) > 3 else ""
+                import tomllib, tomli_w
+                cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
+                with open(cfg_path, "rb") as f:
+                    cfg = tomllib.load(f)
+                cfg["model"][pname] = {"api_key": key, "base_url": url, "model": "gpt-4o"}
+                with open(cfg_path, "w") as f:
+                    tomli_w.dump(cfg, f)
+                console.print(f"[green]Added provider: {pname}[/green]")
+                console.print("[dim]To use it: /provider set {pname}[/dim]")
         elif cmd == "/plugins":
             try:
                 from plugin_loader import list_loaded, list_tools as plt
