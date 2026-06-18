@@ -5,7 +5,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
-SESSION_DIR = Path(os_mod.path.expanduser("~/neural/sessions"))
+SESSION_DIR = Path(os_mod.path.expanduser("~/rsa-agentic/sessions"))
 
 
 def save_session(session_id: str, messages: list[dict],

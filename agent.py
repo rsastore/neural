@@ -116,7 +116,7 @@ class AgentSession:
         """Process user input through agent loop. Returns final answer."""
         # Load system prompt
         sys_file = self.config.get("system_prompt_file", "system.md")
-        sys_path = Path(os_mod.path.expanduser("~/neural")) / sys_file
+        sys_path = Path(os_mod.path.expanduser("~/rsa-agentic")) / sys_file
         custom = sys_path.read_text() if sys_path.exists() else None
         sys_prompt = build_system_prompt(custom, self.persona)
 
@@ -176,7 +176,7 @@ class AgentSession:
 
     def run_stream(self, user_input: str):
         sys_file = self.config.get("system_prompt_file", "system.md")
-        sys_path = Path(os_mod.path.expanduser("~/neural")) / sys_file
+        sys_path = Path(os_mod.path.expanduser("~/rsa-agentic")) / sys_file
         custom = sys_path.read_text() if sys_path.exists() else None
         sys_prompt = build_system_prompt(custom, self.persona)
         if not self._messages:

@@ -34,7 +34,7 @@ BRAND = """
 # ── Config Loader ──────────────────────────────────────────────
 def load_config():
     import tomllib
-    cfg_path = Path(os_mod.path.expanduser("~/neural/config.toml"))
+    cfg_path = Path(os_mod.path.expanduser("~/rsa-agentic/config.toml"))
     if not cfg_path.exists():
         console.print("[red]Config not found. Run setup first.[/red]")
         return None
@@ -62,7 +62,7 @@ class NeuralTUI:
         self.status = "idle"
 
         # Session save dir
-        self.sessions_dir = Path(os_mod.path.expanduser("~/neural/sessions"))
+        self.sessions_dir = Path(os_mod.path.expanduser("~/rsa-agentic/sessions"))
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
 
         # Register tool callback
@@ -378,7 +378,7 @@ class NeuralTUI:
         elif cmd == "/forget":
             import json, os
             for f in ["facts.json", "skills.json"]:
-                p = os.path.expanduser(f"~/neural/knowledge/{f}")
+                p = os.path.expanduser(f"~/rsa-agentic/knowledge/{f}")
                 with open(p, "w") as fh:
                     json.dump([], fh)
             console.print("[yellow]Knowledge cleared.[/yellow]")

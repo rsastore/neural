@@ -31,8 +31,8 @@
 ## Quick Install
 
 ```bash
-git clone https://github.com/rsastore/rsa-agentic.git ~/neural
-cd ~/neural
+git clone https://github.com/rsastore/rsa-agentic.git ~/rsa-agentic
+cd ~/rsa-agentic
 pip install prompt_toolkit rich requests
 ollama pull qwen2.5:1.5b
 ./neural.py
@@ -50,8 +50,8 @@ make -j4 llama-cli
 mkdir -p ~/storage/models
 cd ~/storage/models
 wget -O qwen2.5-1.5b-instruct-q4_k_m.gguf https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf
-git clone https://github.com/rsastore/rsa-agentic.git ~/neural
-cd ~/neural && python3 neural.py
+git clone https://github.com/rsastore/rsa-agentic.git ~/rsa-agentic
+cd ~/rsa-agentic && python3 neural.py
 ```
 
 ## Docker Sandbox

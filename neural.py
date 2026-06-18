@@ -44,7 +44,7 @@ def main():
     # Load config
     cfg_path = Path.home() / "neural" / "config.toml"
     if not cfg_path.exists():
-        print("Config not found. Run from ~/neural/ directory.")
+        print("Config not found. Run from ~/rsa-agentic/ directory.")
         return
 
     import tomllib
