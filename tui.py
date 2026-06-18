@@ -226,6 +226,9 @@ class NeuralTUI:
 - `/compact` — Compact long context (summarize old messages)
 - `/knowledge` — Show what Neural has learned
 - `/forget` — Clear all learned knowledge
+- `/persona` — Show current mode
+- `/persona <mode>` — Switch mode (coder, sysadmin, research, default)
+- `/context` — Show terminal context
 - `/plan` — Show planning mode
 - `/plugins` — List loaded plugins & tools
 - `/checklist` — Show tasks
@@ -374,6 +377,31 @@ class NeuralTUI:
                 with open(p, "w") as fh:
                     json.dump([], fh)
             console.print("[yellow]Knowledge cleared.[/yellow]")
+        elif cmd.startswith("/persona"):
+            parts = cmd.split(maxsplit=1)
+            pname = parts[1].strip() if len(parts) > 1 else ""
+            from context import PERSONAS
+            if pname in PERSONAS:
+                self.session.persona = pname
+                pn = PERSONAS[pname]["name"]
+                console.print(f"[green]Switched to mode: {pn}[/green]")
+            elif not pname:
+                cur = self.session.persona
+                p_info = PERSONAS.get(cur, {"name": cur})
+                console.print(f"[bold cyan]Current mode: {p_info['name']}[/bold cyan]")
+                console.print("[dim]Available:[/dim]")
+                for k, v in PERSONAS.items():
+                    mark = " >" if k == cur else "  "
+                    vname = v["name"]
+                    console.print(f"  {mark} [cyan]{k}[/cyan]  {vname}")
+            else:
+                console.print(f"[yellow]Unknown mode: {pname}. Try: coder, sysadmin, research, default[/yellow]")
+        elif cmd == "/context":
+            from context import build_context_block
+            ctx = build_context_block()
+            console.print(f"[bold cyan]Terminal Context:[/bold cyan]")
+            for line in ctx.split("\n")[1:]:
+                console.print(f"  [dim]{line}[/dim]")
         elif cmd == "/plugins":
             try:
                 from plugin_loader import list_loaded, list_tools as plt

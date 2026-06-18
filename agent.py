@@ -4,10 +4,11 @@ from typing import Callable
 
 from tools.builtin import get_tool, tool_descriptions, list_tools, BUILTIN_TOOLS
 from knowledge import search_knowledge, learn_from_interaction, knowledge_summary
+from context import build_context_block, persona_instruction
 
 # ── System Prompt Builder ─────────────────────────────────────
 
-def build_system_prompt(custom_prompt: str | None = None) -> str:
+def build_system_prompt(custom_prompt: str | None = None, persona: str = 'default') -> str:
     tools_desc = tool_descriptions()
 
     base = f"""You are Neural, an autonomous AI agent.
@@ -33,9 +34,22 @@ When the task is complete, respond with a natural language answer.
 5. Verify your results before reporting.
 """
     try:
-        ctx = search_knowledge(custom_prompt or "")
-        if ctx:
-            base += f"\n\n{ctx}"
+        tctx = build_context_block()
+        if tctx:
+            base += f"\n\n{tctx}"
+    except:
+        pass
+    try:
+        kctx = search_knowledge(custom_prompt or "")
+        if kctx:
+            base += f"\n\n{kctx}"
+    except:
+        pass
+    # Add persona instruction
+    try:
+        pi = persona_instruction(persona)
+        if pi:
+            base += f"\n\n## Mode: {persona}\n{pi}"
     except:
         pass
     if custom_prompt:
@@ -53,6 +67,7 @@ class AgentSession:
         self.config = config
         self.max_iters = config.get("max_tool_iters", 15)
         self.session_id = os_mod.urandom(4).hex()
+        self.persona = "default"
         self._messages: list[dict] = []
         self.tool_callbacks: list[Callable] = []
 
@@ -63,6 +78,7 @@ class AgentSession:
     def reset(self):
         self._messages = []
         self.session_id = os_mod.urandom(4).hex()
+        self.persona = "default"
 
     def _extract_tool_call(self, text: str) -> dict | None:
         """Parse tool call JSON from model response. Handles nested braces."""
@@ -104,7 +120,7 @@ class AgentSession:
         sys_file = self.config.get("system_prompt_file", "system.md")
         sys_path = Path(os_mod.path.expanduser("~/neural")) / sys_file
         custom = sys_path.read_text() if sys_path.exists() else None
-        sys_prompt = build_system_prompt(custom)
+        sys_prompt = build_system_prompt(custom, self.persona)
 
         # Initialize messages if first turn
         if not self._messages:
@@ -157,7 +173,7 @@ class AgentSession:
         sys_file = self.config.get("system_prompt_file", "system.md")
         sys_path = Path(os_mod.path.expanduser("~/neural")) / sys_file
         custom = sys_path.read_text() if sys_path.exists() else None
-        sys_prompt = build_system_prompt(custom)
+        sys_prompt = build_system_prompt(custom, self.persona)
         if not self._messages:
             self._messages.append({"role": "system", "content": sys_prompt})
         self._messages.append({"role": "user", "content": user_input})
