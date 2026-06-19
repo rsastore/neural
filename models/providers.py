@@ -43,7 +43,7 @@ class OllamaProvider(ModelProvider):
             },
             "stream": stream,
         }
-        return self.session.post(url, json=body, timeout=self.timeout)
+        return self.session.post(url, json=body, timeout=self.timeout, stream=stream)
 
     def chat(self, messages: list[dict], **kwargs) -> str:
         r = self._call(messages, stream=False)
