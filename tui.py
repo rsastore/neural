@@ -597,6 +597,15 @@ class NeuralTUI:
             console.print("  /dataset pull <name>")
             console.print("  /dataset learn <name>")
             console.print("  /dataset search <name> <query>")
+        elif cmd == "/model":
+            import os as _os
+            cfg_path = _os.path.expanduser("~/rsa-agentic/config.toml")
+            if _os.path.exists(cfg_path):
+                import tomllib
+                cfg = tomllib.load(open(cfg_path, "rb"))
+                current = cfg.get("model", {}).get("model_name", "unknown")
+                console.print(f"[cyan]Current model: {current}[/cyan]")
+            console.print("[yellow]Usage: /model <name> (e.g. /model llama3.2:3b)[/yellow]")
         elif cmd.startswith("/model "):
             model_name = cmd[7:].strip()
             if not model_name:
