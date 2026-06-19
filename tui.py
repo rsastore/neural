@@ -719,11 +719,33 @@ class NeuralTUI:
                     console.print(f"[red]Install failed: {r.stderr[:200]}[/red]")
             elif action == "model" and model_name:
                 console.print(f"[cyan]Downloading {model_name}...[/cyan]")
+                # Try Ollama first
                 r = subprocess.run(["ollama", "pull", model_name], capture_output=True, text=True, timeout=300)
                 if r.returncode == 0:
                     console.print(f"[green]✅ {model_name} downloaded![/green]")
                 else:
-                    console.print(f"[red]Failed: {r.stderr[:200]}[/red]")
+                    # Fallback to HuggingFace
+                    console.print(f"[yellow]Not found on Ollama. Searching HuggingFace...[/yellow]")
+                    try:
+                        import requests
+                        hf_r = requests.get(
+                            f"https://huggingface.co/api/models?search={model_name}&sort=downloads&direction=-1&limit=5",
+                            timeout=10
+                        )
+                        if hf_r.status_code == 200:
+                            results = hf_r.json()
+                            if results:
+                                console.print("[bold cyan]Found on HuggingFace:[/bold cyan]")
+                                for i, m in enumerate(results[:5], 1):
+                                    console.print(f"  {i}. [cyan]{m['modelId']}[/cyan] [dim]{m.get('downloads',0):,} downloads[/dim]")
+                                console.print()
+                                console.print("[dim]Use: /hf pull <model-id> to download[/dim]")
+                            else:
+                                console.print("[red]Model not found anywhere.[/red]")
+                        else:
+                            console.print(f"[red]Failed: {r.stderr[:200]}[/red]")
+                    except Exception as e:
+                        console.print(f"[red]Error searching: {e}[/red]")
             elif action == "model" and not model_name:
                 popular = [
                     ("qwen2.5:1.5b", "1.1 GB", "Best for HP 6GB RAM"),
