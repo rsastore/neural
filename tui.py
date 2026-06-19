@@ -1120,7 +1120,7 @@ class NeuralTUI:
             if pname == "openai" and not cfg["model"].get("openai",{}).get("api_key"):
                 console.print("[yellow]Warning: OpenAI key not set. Set with: /provider key openai <key>[/yellow]")
             with open(cfg_path, "w") as f:
-                tomli_w.dump(cfg, f)
+                _write_toml(cfg, cfg_path)
             console.print(f"[green]Switched to provider: {pname}[/green]")
             # Apply immediately - recreate provider & reload session
             from models.providers import create_provider
