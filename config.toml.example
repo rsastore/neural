@@ -57,3 +57,8 @@ theme = "dark"
 show_tool_calls = true
 stream_output = true
 compact_at_pct = 60
+
+[model.deepseek]
+api_key = ""
+base_url = "https://api.deepseek.com"
+model = "deepseek-chat"
