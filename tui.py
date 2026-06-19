@@ -215,8 +215,21 @@ class NeuralTUI:
             console.print()
 
             try:
+                # Show loading indicator while waiting for first token
+                import threading as _th, time as _t2
+                _done = [False]
+                def _spinner():
+                    for c in "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏":
+                        if _done[0]:
+                            break
+                        console.print(f"[dim]{c} Thinking...[/dim]", end="\r")
+                        _t2.sleep(0.1)
+                _spinner_th = _th.Thread(target=_spinner, daemon=True)
+                _spinner_th.start()
                 for event in self.session.run_stream(user_input):
                     if event["type"] == "token":
+                        _done[0] = True
+                        console.print(" "*20 + "\r", end="")  # clear spinner line
                         if not buf:
                             console.print("[dim]⚡ [/dim]", end="")
                         # Typewriter effect: word by word with delay
