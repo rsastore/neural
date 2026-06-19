@@ -41,6 +41,21 @@ def load_config():
     with open(cfg_path, "rb") as f:
         return tomllib.load(f)
 
+def _check_ollama_status(host="http://localhost:11434", model=""):
+    """Check if Ollama is running and model is available."""
+    import requests
+    try:
+        r = requests.get(f"{host}/api/tags", timeout=3)
+        if r.status_code == 200:
+            models = r.json().get("models", [])
+            installed = [m["name"] for m in models]
+            if model and model not in installed:
+                return f"⚠️ Ollama OK, model '{model}' not pulled", "yellow"
+            return f"✅ Ollama OK ({len(installed)} models)", "green"
+        return f"⚠️ Ollama error: {r.status_code}", "yellow"
+    except Exception:
+        return "❌ Ollama not running (/install ollama)", "red"
+
 def bootstrap_display(provider_name: str, model_name: str, tool_count: int):
     grid = Table.grid(padding=1)
     grid.add_column(style="cyan bold")
@@ -48,7 +63,8 @@ def bootstrap_display(provider_name: str, model_name: str, tool_count: int):
     grid.add_row("● Model", f"{model_name}")
     grid.add_row("● Provider", provider_name)
     grid.add_row("● Tools", str(tool_count))
-    grid.add_row("● Status", "✅ Ollama connected")
+    status, color = _check_ollama_status(model=model_name)
+    grid.add_row("● Status", f"[{color}]{status}[/{color}]")
     console.print(Panel(grid, title="[bold cyan]RSA Agentic[/bold cyan]", border_style="cyan"))
 
 # ── TUI Core ───────────────────────────────────────────────────
