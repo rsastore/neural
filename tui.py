@@ -226,11 +226,13 @@ class NeuralTUI:
 
     def _handle_command(self, cmd: str):
         cmd = cmd.strip().lower()
+        import os as _os, sys as _sys
 
         if cmd == "/exit":
+            __sys.exit(0)
             import sys
             self._handle_exit()
-            sys.exit(0)
+            _sys.exit(0)
         elif cmd in ("/help", "/?"):
             help_text = """
 **Commands:**
