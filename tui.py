@@ -269,6 +269,7 @@ class NeuralTUI:
                 for i, (n, s, d) in enumerate(popular, 1):
                     console.print(f"  {i}. [cyan]{n:<20}[/cyan] {s:<8} [dim]{d}[/dim]")
                 console.print("[dim]Usage: /model <name> (e.g. /model llama3.2:3b)[/dim]")
+                return
             else:
                 # Download model
                 import subprocess as _sp
@@ -350,6 +351,7 @@ class NeuralTUI:
                 for i, (n, s, d) in enumerate(popular, 1):
                     console.print(f"  {i}. [cyan]{n:<20}[/cyan] {s:<8} [dim]{d}[/dim]")
                 console.print("[dim]Usage: /model <name> (e.g. /model llama3.2:3b)[/dim]")
+                return
             else:
                 import subprocess as _sp
                 console.print(f"[cyan]Downloading {sub}...[/cyan]")
