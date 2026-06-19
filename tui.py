@@ -341,16 +341,25 @@ class NeuralTUI:
             parts = cmd.split(None, 1)
             sub = parts[1].strip() if len(parts) > 1 else ""
             if not sub or sub == "list":
-                popular = [
-                    ("qwen2.5:1.5b", "1.1 GB", "Best for HP 6GB RAM"),
-                    ("llama3.2:3b", "2.0 GB", "Best English tool calling"),
-                    ("gemma2:2b", "1.5 GB", "Ringan"),
-                    ("mistral:7b", "4.2 GB", "Best quality"),
-                ]
-                console.print("[bold cyan]Popular models:[/bold cyan]")
-                for i, (n, s, d) in enumerate(popular, 1):
-                    console.print(f"  {i}. [cyan]{n:<20}[/cyan] {s:<8} [dim]{d}[/dim]")
-                console.print("[dim]Usage: /model <name> (e.g. /model llama3.2:3b)[/dim]")
+                # Show REAL installed models from Ollama
+                import requests as _req
+                installed = []
+                try:
+                    _r = _req.get("http://localhost:11434/api/tags", timeout=3)
+                    if _r.status_code == 200:
+                        installed = [m["name"] for m in _r.json().get("models", [])]
+                except Exception:
+                    pass
+                if installed:
+                    console.print(f"[bold cyan]Installed models ({len(installed)}):[/bold cyan]")
+                    for i, m in enumerate(installed, 1):
+                        console.print(f"  {i}. [cyan]{m}[/cyan]")
+                else:
+                    console.print("[yellow]No models installed yet.[/yellow]")
+                # Also show popular suggestions
+                console.print("[dim]Popular (download with /model <name>):[/dim]")
+                popular = ["qwen2.5:1.5b", "llama3.2:3b", "gemma2:2b"]
+                console.print(f"  [dim]{', '.join(popular)}[/dim]")
                 return
             else:
                 import subprocess as _sp
