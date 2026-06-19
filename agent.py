@@ -181,7 +181,11 @@ class AgentSession:
                         collected = [raw]
                         yield {"type": "token", "content": raw}
             except Exception as e:
-                yield {"type": "status", "content": f"⚠️ Stream failed, retrying non-streaming..."}
+                try:
+                    with open("/tmp/rsa_stream_error.log", "a") as _f:
+                        _f.write(f"{type(e).__name__}: {e}\n")
+                except: pass
+                yield {"type": "status", "content": f"⚠️ Stream error, retrying..."}
                 raw = self.provider.chat(self._messages)
                 if raw:
                     collected = [raw]
