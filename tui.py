@@ -585,12 +585,33 @@ class NeuralTUI:
                 else:
                     for r in result["results"]:
                         console.print(f"  [cyan][{r['domain']}][/cyan] {r['snippet'][:100]}...")
+        elif cmd == "/ft":
+            # Fine-tune
+            from tools.builtin import _fine_tune
+            console.print("[cyan]Fine-tuning with dataset...[/cyan]")
+            result = _fine_tune()
+            console.print(f"[green]{result}[/green]")
         elif cmd == "/dataset":
             console.print("[bold cyan]Dataset Manager[/bold cyan]")
             console.print("  /dataset list")
             console.print("  /dataset pull <name>")
             console.print("  /dataset learn <name>")
             console.print("  /dataset search <name> <query>")
+        elif cmd.startswith("/model "):
+            model_name = cmd[7:].strip()
+            if not model_name:
+                console.print("[yellow]Usage: /model <name> (e.g. /model llama3.2:3b)[/yellow]")
+            else:
+                import tomllib, tomli_w, os as _os
+                cfg_path = _os.path.expanduser("~/rsa-agentic/config.toml")
+                if _os.path.exists(cfg_path):
+                    cfg = tomllib.load(open(cfg_path, "rb"))
+                    cfg["model"]["model_name"] = model_name
+                    with open(cfg_path, "w") as f:
+                        tomli_w.dump(cfg, f)
+                    console.print(f"[green]✅ Model set to {model_name}. Restart to apply.[/green]")
+                else:
+                    console.print("[red]Config not found at ~/rsa-agentic/config.toml[/red]")
         elif cmd == "/install":
             # Auto-install Ollama (Termux / Linux)
             import subprocess, sys, os as _os
