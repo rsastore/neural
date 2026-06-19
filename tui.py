@@ -762,7 +762,7 @@ class NeuralTUI:
                     try:
                         name = parser(cwd)
                         console.print(f"  [green]●[/green] {lang:<15} {name}")
-                    except:
+                    except Exception:
                         console.print(f"  [green]●[/green] {lang:<15} {fname}")
                     found = True
             # Git info
@@ -838,8 +838,8 @@ class NeuralTUI:
                 try:
                     from db import log_cost
                     log_cost(self.session.session_id, provider_name, inp, out, 0.0)
-                except: pass
-            except:
+                except Exception: pass
+            except Exception:
                 console.print(f"  [dim]No session data[/dim]")
         elif cmd.startswith("/schedule add"):
             parts = cmd.split(maxsplit=2)
