@@ -60,20 +60,29 @@ def bootstrap_display(provider_name: str, model_name: str, tool_count: int):
     grid = Table.grid(padding=1)
     grid.add_column(style="cyan bold")
     grid.add_column()
-    grid.add_row("● Model", f"{model_name}")
-    # Check real status for Ollama
     import requests as _req
     try:
         _r = _req.get("http://localhost:11434/api/tags", timeout=2)
         if _r.status_code == 200:
-            grid.add_row("● Provider", provider_name)
+            models = _r.json().get("models", [])
+            if models:
+                # Show actual running model
+                actual = models[0]["name"]
+                grid.add_row("● Model", actual)
+                grid.add_row("● Provider", f"Ollama/{actual}")
+            else:
+                grid.add_row("● Model", "[dim]-[/dim]")
+                grid.add_row("● Provider", "[dim]Ollama — no models pulled[/dim]")
         else:
-            grid.add_row("● Provider", f"[red]{provider_name} — not responding[/red]")
+            grid.add_row("● Model", "[dim]-[/dim]")
+            grid.add_row("● Provider", "[dim]-[/dim]")
+        status, color = "✅ Ollama running", "green"
     except Exception:
-        grid.add_row("● Provider", f"[red]{provider_name} — not running[/red]")
+        grid.add_row("● Model", "[dim]-[/dim]")
+        grid.add_row("● Provider", "[dim]-[/dim]")
+        status, color = "❌ Ollama not running", "red"
     grid.add_row("● Tools", str(tool_count))
-    status, color = _check_ollama_status(model=model_name)
-    grid.add_row("● Status", f"[{color}]{status}[/{color}]")
+    grid.add_row("● Status", f"[{color}]{status}[/{color}]" )
     console.print(Panel(grid, title="[bold cyan]RSA Agentic[/bold cyan]", border_style="cyan"))
 
 # ── TUI Core ───────────────────────────────────────────────────
