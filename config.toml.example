@@ -3,8 +3,8 @@ name = "RSA Agentic"
 version = "0.1.0"
 
 [model]
-provider = "ollama"
-model_name = "qwen2.5:1.5b"
+provider = "deepseek"
+model_name = "deepseek-v4-flash"
 temperature = 0.3
 max_tokens = 4096
 ctx_size = 8192
@@ -18,7 +18,7 @@ base_url = "https://api.openai.com/v1"
 model = "gpt-4o"
 
 [model.deepseek]
-api_key = ""
+api_key = "sk-9a3779b06a5b46d99c307ee64df8fbc0"
 base_url = "https://api.deepseek.com"
 model = "deepseek-v4-flash"
 
@@ -33,13 +33,7 @@ model = "gemini-2.0-flash"
 [agent]
 max_tool_iters = 15
 system_prompt_file = "system.md"
-need_approval = [
-    "exec_shell",
-    "write_file",
-    "edit_file",
-    "sandbox_exec",
-    "any"
-]
+need_approval = ["exec_shell","write_file","edit_file","sandbox_exec","any"]
 verbose = false
 
 [vectordb]
