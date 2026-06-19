@@ -215,22 +215,24 @@ class NeuralTUI:
             console.print()
 
             try:
-                # Show loading indicator while waiting for first token
+                # Animated spinner with status updates
                 import threading as _th, time as _t2
                 _done = [False]
+                _status = ["⏳ Thinking..."]
                 def _spinner():
-                    for c in "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏":
-                        if _done[0]:
-                            break
-                        console.print(f"[dim]{c} Thinking...[/dim]", end="\r")
-                        _t2.sleep(0.1)
+                    frames = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+                    i = 0
+                    while not _done[0]:
+                        frame = frames[i % len(frames)]
+                        msg = _status[-1]
+                        console.print(f"[dim]{frame} {msg}[/dim]", end="\r")
+                        i += 1
+                        _t2.sleep(0.12)
                 _spinner_th = _th.Thread(target=_spinner, daemon=True)
                 _spinner_th.start()
                 for event in self.session.run_stream(user_input):
                     if event["type"] == "status":
-                        # Update spinner with status message
-                        msg = event["content"]
-                        console.print(f"[dim]{msg}[/dim]", end="\r")
+                        _status.append(event["content"])
                     elif event["type"] == "token":
                         _done[0] = True
                         # Clear spinner line properly
