@@ -21,7 +21,7 @@ def descriptions():
     for n, t in _reg.items():
         p = ", ".join(f"{k}: {v}" for k,v in t.params.items())
         lines.append(f"- {n}({p}): {t.desc}")
-    return "\\n".join(lines)
+    return "\n".join(lines)
 
 def discover():
     _ld.clear()

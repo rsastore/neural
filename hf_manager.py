@@ -165,10 +165,10 @@ def pull_model(model_id):
 
 def use_model(model_name):
     import sys
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
+    if sys.version_info >= (3, 11):
+        import tomllib
+    else:
+        import tomli as tomllib
     fp = os.path.expanduser('~/rsa-agentic/config.toml')
     with open(fp, 'rb') as f:
         cfg = tomllib.load(f)

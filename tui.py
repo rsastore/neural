@@ -319,7 +319,7 @@ class NeuralTUI:
                 console.print("[yellow]Usage: /plan <goal>[/yellow]")
             else:
                 console.print("[bold cyan]Neural Planner[/bold cyan]")
-                console.print(f"[dim]Goal: {goal}[/dim]\\n")
+                console.print(f"[dim]Goal: {goal}[/dim]\n")
                 planner = PlannerAgent(self.session)
                 try:
                     for event in planner.run_with_plan(goal):
@@ -332,7 +332,7 @@ class NeuralTUI:
                         elif event["type"] == "step_start":
                             idx = event["index"] + 1
                             desc = event.get("desc", "")[:50]
-                            console.print(f"\\n[bold]Step {idx}:[/bold] {desc} [dim](attempt {event['attempt']})[/dim]")
+                            console.print(f"\n[bold]Step {idx}:[/bold] {desc} [dim](attempt {event['attempt']})[/dim]")
                         elif event["type"] == "token":
                             sys.stdout.write(event["content"])
                             sys.stdout.flush()
@@ -346,13 +346,13 @@ class NeuralTUI:
                             r = event["content"][:150]
                             console.print(f"  [bright_black]  └─ {r}[/bright_black]")
                         elif event["type"] == "step_done":
-                            console.print(f"\\n  [green]✓ Step {event['index'] + 1} complete[/green]")
+                            console.print(f"\n  [green]✓ Step {event['index'] + 1} complete[/green]")
                         elif event["type"] == "step_retry":
-                            console.print(f"\\n  [yellow]↻ Retry {event['retry']}[/yellow]")
+                            console.print(f"\n  [yellow]↻ Retry {event['retry']}[/yellow]")
                         elif event["type"] == "step_failed":
-                            console.print(f"\\n  [red]✗ Step {event['index'] + 1} failed[/red]")
+                            console.print(f"\n  [red]✗ Step {event['index'] + 1} failed[/red]")
                         elif event["type"] == "final":
-                            console.print(f"\\n[bold cyan]Result:[/bold cyan]\\n{event['content']}")
+                            console.print(f"\n[bold cyan]Result:[/bold cyan]\n{event['content']}")
                 except Exception as e:
                     console.print(f"\\n[red]Planner error: {e}[/red]")
         elif cmd == "/plan":
