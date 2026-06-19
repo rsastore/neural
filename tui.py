@@ -1128,12 +1128,13 @@ class NeuralTUI:
             self.config = cfg
             console.print(f"[dim]Provider active: {self.provider.name}[/dim]")
         elif cmd.startswith("/provider key "):
-            parts = cmd.split(maxsplit=2)
-            if len(parts) < 3:
+            rest = cmd[14:].strip()  # remove "/provider key "
+            parts = rest.split(None, 1)
+            if len(parts) < 2:
                 console.print("[yellow]Usage: /provider key <provider> <api_key>[/yellow]")
             else:
-                pname = parts[1]
-                key = parts[2]
+                pname = parts[0]
+                key = parts[1]
                 import os, tomllib
                 cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
                 with open(cfg_path, "rb") as f:
