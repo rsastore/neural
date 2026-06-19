@@ -786,7 +786,7 @@ class NeuralTUI:
                     cfg["model"]["model_name"] = model_name
                     _write_toml(cfg, cfg_path)
                     from models.providers import create_provider
-                    self.provider = create_provider(cfg)
+                    self.provider = create_provider(cfg.get("model", {}))
                     self.config = cfg
                     console.print(f"[green]✅ Switched to {self.provider.name}[/green]")
                     return
@@ -951,7 +951,7 @@ class NeuralTUI:
                     cfg["model"]["model_name"] = model_name
                     _write_toml(cfg, cfg_path)
                     from models.providers import create_provider
-                    self.provider = create_provider(cfg)
+                    self.provider = create_provider(cfg.get("model", {}))
                     self.config = cfg
                     console.print(f"[green]✅ Switched to {self.provider.name}[/green]")
                     return
