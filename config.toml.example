@@ -3,8 +3,8 @@ name = "RSA Agentic"
 version = "0.1.0"
 
 [model]
-provider = "deepseek"
-model_name = "deepseek-v4-flash"
+provider = "ollama"
+model_name = "qwen2.5:1.5b"
 temperature = 0.3
 max_tokens = 4096
 ctx_size = 8192
