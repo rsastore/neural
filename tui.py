@@ -310,13 +310,30 @@ class NeuralTUI:
                 console.print(f"[cyan]Downloading {sub}...[/cyan]")
                 _sp.run(["ollama", "pull", sub], timeout=1800)
                 # Switch to downloaded model immediately
-                import tomllib, tomli_w, os as _os
+                import tomllib, os as _os
                 cfg_path = _os.path.expanduser("~/rsa-agentic/config.toml")
                 cfg = tomllib.load(open(cfg_path, "rb"))
                 cfg["model"]["model_name"] = sub
                 cfg["model"]["provider"] = "ollama"
+                # Write TOML manually (avoids tomli_w dependency)
+                lines = []
+                for section, values in cfg.items():
+                    lines.append(f"[{section}]")
+                    if isinstance(values, dict):
+                        for k, v in values.items():
+                            if isinstance(v, dict):
+                                lines.append(f"[{section}.{k}]")
+                                for sk, sv in v.items():
+                                    lines.append(f'{sk} = "{sv}"')
+                            elif isinstance(v, bool):
+                                lines.append(f"{k} = {'true' if v else 'false'}")
+                            elif isinstance(v, (int, float)):
+                                lines.append(f"{k} = {v}")
+                            else:
+                                lines.append(f'{k} = "{v}"')
+                    lines.append("")
                 with open(cfg_path, "w") as f:
-                    tomli_w.dump(cfg, f)
+                    f.write("\n".join(lines))
                 from models.providers import create_provider
                 self.provider = create_provider(cfg)
                 self.config = cfg
