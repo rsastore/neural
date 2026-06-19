@@ -1101,6 +1101,7 @@ class NeuralTUI:
             if not found:
                 console.print("  [yellow]Unknown project type[/yellow]")
         elif cmd == "/tree":
+            import os
             cmd_str = cmd.strip()
             depth = 2
             parts = cmd_str.split()
