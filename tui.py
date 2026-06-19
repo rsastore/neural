@@ -810,10 +810,13 @@ class NeuralTUI:
                     for r in result["results"]:
                         console.print(f"  [cyan][{r['domain']}][/cyan] {r['snippet'][:100]}...")
         elif cmd == "/ft":
-            # Fine-tune
+            console.print("[yellow]Usage: /ft <dataset-name>[/yellow]")
+            console.print("[dim]Available datasets: /dataset list[/dim]")
+        elif cmd.startswith("/ft "):
+            dset = cmd[4:].strip()
             from tools.builtin import _fine_tune
-            console.print("[cyan]Fine-tuning with dataset...[/cyan]")
-            result = _fine_tune()
+            console.print(f"[cyan]Fine-tuning with: {dset}...[/cyan]")
+            result = _fine_tune(dset)
             console.print(f"[green]{result}[/green]")
         elif cmd == "/dataset":
             console.print("[bold cyan]Dataset Manager[/bold cyan]")
