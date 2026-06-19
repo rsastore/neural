@@ -586,7 +586,7 @@ class NeuralTUI:
             console.print("  /dataset learn <name>")
             console.print("  /dataset search <name> <query>")
         elif cmd == "/provider":
-            import tomllib
+            import os, tomllib
             cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
             with open(cfg_path, "rb") as f:
                 cfg = tomllib.load(f)
@@ -609,7 +609,7 @@ class NeuralTUI:
             console.print("  /provider add myapi url key      Add custom provider")
         elif cmd.startswith("/provider set "):
             pname = cmd[14:].strip()
-            import tomllib, tomli_w
+            import os, tomllib, tomli_w
             cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
             with open(cfg_path, "rb") as f:
                 cfg = tomllib.load(f)
@@ -627,7 +627,7 @@ class NeuralTUI:
             else:
                 pname = parts[1]
                 key = parts[2]
-                import tomllib, tomli_w
+                import os, tomllib, tomli_w
                 cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
                 with open(cfg_path, "rb") as f:
                     cfg = tomllib.load(f)
@@ -645,7 +645,7 @@ class NeuralTUI:
                 pname = parts[1]
                 url = parts[2]
                 key = parts[3] if len(parts) > 3 else ""
-                import tomllib, tomli_w
+                import os, tomllib, tomli_w
                 cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
                 with open(cfg_path, "rb") as f:
                     cfg = tomllib.load(f)
