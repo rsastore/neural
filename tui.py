@@ -1231,7 +1231,9 @@ class NeuralTUI:
                 cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
                 with open(cfg_path, "rb") as f:
                     cfg = tomllib.load(f)
-                if pname not in cfg.get("model", {}):
+                if "model" not in cfg:
+                    cfg["model"] = {}
+                if pname not in cfg["model"]:
                     cfg["model"][pname] = {"api_key": ""}
                 cfg["model"][pname]["api_key"] = key
                 with open(cfg_path, "w") as f:
@@ -1249,6 +1251,8 @@ class NeuralTUI:
                 cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
                 with open(cfg_path, "rb") as f:
                     cfg = tomllib.load(f)
+                if "model" not in cfg:
+                    cfg["model"] = {}
                 cfg["model"][pname] = {"api_key": key, "base_url": url, "model": "gpt-4o"}
                 with open(cfg_path, "w") as f:
                     _write_toml(cfg, cfg_path)
