@@ -52,14 +52,16 @@ class OllamaProvider(ModelProvider):
             time.sleep(5)
             r = self._call(messages, stream=False)
         if r.status_code == 404:
-            # Model not found — auto-pull
-            import subprocess as _sp
-            _sp.run(["ollama", "pull", self.model], timeout=1800)
-            r = self._call(messages, stream=False)
-            if r.status_code == 200:
-                data = r.json()
-                self.last_tokens = {"input": data.get("prompt_eval_count",0), "output": data.get("eval_count",0)}
-                return data.get("message", {}).get("content", "")
+            # Model not found — suggest installed models instead
+            try:
+                import requests
+                tags = requests.get(f"{self.host}/api/tags", timeout=3).json()
+                installed = [m["name"] for m in tags.get("models", [])]
+                if installed:
+                    return f"Model '{self.model}' not found. Installed: {', '.join(installed[:5])}. Use: /model <name>"
+                return f"Model '{self.model}' not found. No models installed. Use: /model list"
+            except Exception:
+                return f"Error: Model '{self.model}' not found. Use: /model list"
         if r.status_code != 200:
             return f"Error: Ollama returned {r.status_code}: {r.text[:100]}"
         data = r.json()
