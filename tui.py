@@ -283,6 +283,7 @@ class NeuralTUI:
 
     def _handle_command(self, cmd: str):
         cmd = cmd.strip().lower()
+        import os, sys
         import os as _os, sys as _sys
 
         # Simplify: map short commands
