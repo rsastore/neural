@@ -137,6 +137,8 @@ No root required. Runs in Termux with local models via llama.cpp.
 | `/reset` | Reset conversation |
 | `/status` | Session info + tools count |
 | `/tools` | List available tools |
+| `/check` | System status (Ollama, RAM) |
+| `/setup` | Create 'rsa' command (symlink to PATH) |
 | `/exit` | Quit |
 
 ### Model & Provider
@@ -147,7 +149,13 @@ No root required. Runs in Termux with local models via llama.cpp.
 | `/provider key <name> <key>` | Set API key for a provider |
 | `/provider add <name> <url> <key>` | Add custom OpenAI-compatible provider |
 | `/models` | List installed models |
-| `/model <name>` | Switch to a model |
+| `/model` | Show installed models + popular suggestions |
+| `/model <name>` | Download model + switch to it instantly |
+| `/model list` | Show popular models to download |
+| `/engine` | List available inference engines (ollama, llama.cpp, vllm) |
+| `/engine <name>` | Install an inference engine |
+| `/install ollama` | Install Ollama (Termux/Linux) |
+| `/install model <name>` | Download a model from Ollama |
 | `/hf search <query>` | Search HuggingFace for GGUF models |
 | `/hf pull <id>` | Download model from HuggingFace |
 
@@ -209,7 +217,11 @@ No root required. Runs in Termux with local models via llama.cpp.
 | `/session list` | List saved sessions |
 | `/session load <name>` | Load a session |
 | `/save` | Force save current session |
+| `/session rm <name>` | Delete a session |
 | `/ft <dataset> [model]` | Generate fine-tuning script |
+| `/checklist` | Show task list |
+| `/checklist add <task>` | Add task |
+| `/checklist done <n>` | Mark task done |
 
 ### Server Mode
 | Command | Description |
