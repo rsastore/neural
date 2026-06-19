@@ -701,11 +701,12 @@ class NeuralTUI:
         elif cmd.startswith("/install "):
             # Auto-install Ollama (Termux / Linux)
             import subprocess, sys, os as _os
-            pkg = cmd.split(None, 1)
-            what = pkg[1].strip() if len(pkg) > 1 else ""
-            if not what:
+            parts = cmd.split(None, 2)
+            action = parts[1] if len(parts) > 1 else ""
+            model_name = parts[2] if len(parts) > 2 else ""
+            if not action:
                 console.print("[yellow]Usage: /install ollama | /install model <name>[/yellow]")
-            elif what == "ollama":
+            elif action == "ollama":
                 console.print("[cyan]Installing Ollama...[/cyan]")
                 if _os.path.exists("/data/data/com.termux"):
                     r = subprocess.run(["pkg", "install", "ollama", "-y"], capture_output=True, text=True, timeout=120)
@@ -716,8 +717,7 @@ class NeuralTUI:
                     subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 else:
                     console.print(f"[red]Install failed: {r.stderr[:200]}[/red]")
-            elif what == "model" and len(pkg) > 2:
-                model_name = pkg[2]
+            elif action == "model" and model_name:
                 console.print(f"[cyan]Downloading {model_name}...[/cyan]")
                 r = subprocess.run(["ollama", "pull", model_name], capture_output=True, text=True, timeout=300)
                 if r.returncode == 0:
