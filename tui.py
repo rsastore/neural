@@ -893,8 +893,31 @@ class NeuralTUI:
                 import tomllib
                 cfg = tomllib.load(open(cfg_path, "rb"))
                 current = cfg.get("model", {}).get("model_name", "unknown")
-                console.print(f"[cyan]Current model: {current}[/cyan]")
-            console.print("[yellow]Usage: /model <name> (e.g. /model llama3.2:3b)[/yellow]")
+                provider = cfg.get("model", {}).get("provider", "?")
+                console.print(f"[cyan]Current: {provider} / {current}[/cyan]")
+                latest = {
+                    "deepseek": ["deepseek-chat", "deepseek-coder", "deepseek-reasoner"],
+                    "openai": ["gpt-4o", "gpt-4o-mini", "o3-mini", "o4-mini", "gpt-4.1", "gpt-4.1-nano"],
+                    "anthropic": ["claude-sonnet-4-20250514", "claude-haiku-3-20250313", "claude-opus-4-20250514"],
+                    "google": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
+                    "groq": ["llama3-70b-8192", "llama-3.3-70b-versatile"],
+                    "openrouter": ["openai/gpt-4o", "anthropic/claude-sonnet", "deepseek/deepseek-chat"],
+                }
+                models = latest.get(provider, [])
+                if models:
+                    console.print(f"[bold]Available {provider} models:[/bold]")
+                    for m in models:
+                        mark = "[green]▸[/green]" if m == current else " "
+                        console.print(f"  {mark} [cyan]{m}[/cyan]")
+                    console.print("[dim]Switch: /model <name>[/dim]")
+                else:
+                    try:
+                        import requests as _r
+                        tags = _r.get("http://localhost:11434/api/tags", timeout=3).json()
+                        for m in tags.get("models", []):
+                            console.print(f"  [cyan]{m['name']}[/cyan]")
+                    except:
+                        console.print("[yellow]No API models. Ollama down?[/yellow]")
         elif cmd.startswith("/model "):
             model_name = cmd[7:].strip()
             # Check if current provider is API (not ollama)
