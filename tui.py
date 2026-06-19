@@ -241,13 +241,17 @@ class NeuralTUI:
                         # Typewriter effect: word by word with delay
                         text = event["content"]
                         import time as _t
-                        # Separate by spaces for word-by-word effect
+                        # Word-by-word with adaptive delay
                         words = text.split(" ")
                         for i, w in enumerate(words):
                             console.print(w, end="")
                             if i < len(words) - 1:
                                 console.print(" ", end="")
-                                _t.sleep(0.15)  # 150ms between words
+                                # No delay after punctuation (paragraph ends)
+                                if w and w[-1] in "!?.:;\n":
+                                    _t.sleep(0.05)  # almost instant
+                                else:
+                                    _t.sleep(0.08)  # 80ms normal
                         buf.append(text)
                     elif event["type"] == "tool_call":
                         console.print(f"\n  [bright_black]⚡ {event['tool']}(...)[/bright_black]")
