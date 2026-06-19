@@ -676,7 +676,12 @@ class NeuralTUI:
             with open(cfg_path, "rb") as f:
                 cfg = tomllib.load(f)
             current = cfg.get("model", {}).get("provider", "ollama")
+            model_name = cfg.get("model", {}).get("model_name", "?")
             console.print(f"[bold cyan]Current provider: {current}[/bold cyan]")
+            # Real Ollama status
+            if current == "ollama":
+                status, color = _check_ollama_status(model=model_name)
+                console.print(f"  Status: [{color}]{status}[/{color}]")
             console.print("")
             console.print("[bold]Available:[/bold]")
             providers = [k for k in cfg.get("model", {}).keys() if k not in ("provider","model_name","temperature","max_tokens","ctx_size")]
