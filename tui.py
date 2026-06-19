@@ -585,6 +585,34 @@ class NeuralTUI:
             console.print("  /dataset pull <name>")
             console.print("  /dataset learn <name>")
             console.print("  /dataset search <name> <query>")
+        elif cmd == "/install":
+            # Auto-install Ollama (Termux / Linux)
+            import subprocess, sys, os as _os
+            pkg = cmd.split(None, 1)
+            what = pkg[1].strip() if len(pkg) > 1 else ""
+            if not what:
+                console.print("[yellow]Usage: /install ollama | /install model <name>[/yellow]")
+            elif what == "ollama":
+                console.print("[cyan]Installing Ollama...[/cyan]")
+                if _os.path.exists("/data/data/com.termux"):
+                    r = subprocess.run(["pkg", "install", "ollama", "-y"], capture_output=True, text=True, timeout=120)
+                else:
+                    r = subprocess.run(["curl", "-fsSL", "https://ollama.com/install.sh", "|", "sh"], capture_output=True, text=True, timeout=120, shell=True)
+                if r.returncode == 0:
+                    console.print("[green]✅ Ollama installed! Starting...[/green]")
+                    subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                else:
+                    console.print(f"[red]Install failed: {r.stderr[:200]}[/red]")
+            elif what == "model" and len(pkg) > 2:
+                model_name = pkg[2]
+                console.print(f"[cyan]Downloading {model_name}...[/cyan]")
+                r = subprocess.run(["ollama", "pull", model_name], capture_output=True, text=True, timeout=300)
+                if r.returncode == 0:
+                    console.print(f"[green]✅ {model_name} downloaded![/green]")
+                else:
+                    console.print(f"[red]Failed: {r.stderr[:200]}[/red]")
+            else:
+                console.print("[yellow]Usage: /install ollama | /install model <name>[/yellow]")
         elif cmd == "/provider":
             import os, tomllib
             cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
