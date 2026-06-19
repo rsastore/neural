@@ -246,6 +246,12 @@ class NeuralTUI:
 - `/session load <name>` — Load a session
 - `/session rm <name>` — Delete a session
 - `/save` — Force save session
+- `/install ollama` — Install Ollama (Termux / Linux)
+- `/install model <name>` — Download a model (e.g. qwen2.5:1.5b)
+- `/model <name>` — Switch model on the fly
+- `/vectordb` — Rebuild vector index with embeddings
+- `/ft` — Fine-tune model with dataset
+- `/dataset` — Manage dataset (list, search, learn)
             """
             console.print(Markdown(help_text))
         elif cmd == "/clear":
