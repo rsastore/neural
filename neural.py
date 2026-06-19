@@ -51,7 +51,7 @@ def main():
         return
 
     # Load config
-    cfg_path = Path.home() / "neural" / "config.toml"
+    cfg_path = Path.home() / "rsa-agentic" / "config.toml"
     if not cfg_path.exists():
         print("Config not found. Run from ~/rsa-agentic/ directory.")
         return

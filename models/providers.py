@@ -33,7 +33,7 @@ class OllamaProvider(ModelProvider):
         if r.status_code in (429, 502, 503):
             import time
             time.sleep(5)
-            r = self.session.post(f"{self.host}/api/chat", json=body, timeout=self.timeout)
+            r = self._call(messages, stream=False)
         if r.status_code != 200:
             return f"Error: Ollama returned {r.status_code}: {r.text[:100]}"
         data = r.json()
@@ -151,11 +151,18 @@ class AnthropicProvider(ModelProvider):
         except ImportError:
             return "Error: anthropic not installed. Run: pip install anthropic"
         cl = Anthropic(api_key=self.api_key)
+        # Convert tool results to user messages (Anthropic doesn't support "tool" role)
+        converted = []
+        for m in messages:
+            if m["role"] == "tool":
+                converted.append({"role": "user", "content": f"[Result] {m['content']}"})
+            elif m["role"] != "system":
+                converted.append(m)
         r = cl.messages.create(
             model=self.model,
             max_tokens=self.max_tokens,
             temperature=self.temperature,
-            messages=[m for m in messages if m["role"] != "system"],
+            messages=converted,
             system="\n".join(m["content"] for m in messages if m["role"] == "system"),
         )
         self.last_tokens = {"input": r.usage.input_tokens, "output": r.usage.output_tokens}
@@ -189,13 +196,16 @@ class GoogleProvider(ModelProvider):
         import google.generativeai as genai
         genai.configure(api_key=self.api_key)
         model = genai.GenerativeModel(self.model)
-        # Convert messages
-        history = []
+        # Filter out tool messages, convert to user messages
+        filtered = []
         for m in messages[:-1]:
-            if m["role"] in ("user", "assistant"):
-                history.append({"role": m["role"], "parts": [m["content"]]})
+            role = m["role"]
+            if role in ("user", "assistant"):
+                filtered.append({"role": role, "parts": [m["content"]]})
+            elif role == "tool":
+                filtered.append({"role": "user", "parts": [f"[Result] {m['content']}"]})
         prompt = messages[-1]["content"] if messages else ""
-        chat = model.start_chat(history=history)
+        chat = model.start_chat(history=filtered)
         r = chat.send_message(prompt)
         self.last_tokens = {"input": 0, "output": len(prompt.split())}
         return r.text
