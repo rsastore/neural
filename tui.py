@@ -938,7 +938,11 @@ class NeuralTUI:
             with open(cfg_path, "w") as f:
                 tomli_w.dump(cfg, f)
             console.print(f"[green]Switched to provider: {pname}[/green]")
-            console.print("[dim]Restart Neural for changes to take effect.[/dim]")
+            # Apply immediately - recreate provider & reload session
+            from models.providers import create_provider
+            self.provider = create_provider(cfg)
+            self.config = cfg
+            console.print(f"[dim]Provider active: {self.provider.name}[/dim]")
         elif cmd.startswith("/provider key "):
             parts = cmd.split(maxsplit=2)
             if len(parts) < 3:
