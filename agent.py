@@ -94,7 +94,7 @@ class AgentSession:
             kctx = search_knowledge(user_input)
             if kctx:
                 return f"{user_input}\n\n---\n{kctx}"
-        except: pass
+        except Exception: pass
         return user_input
 
     def _extract_tool_call(self, text: str) -> dict | None:

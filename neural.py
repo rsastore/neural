@@ -9,6 +9,10 @@ Usage:
 
 import sys, os, json, argparse
 from pathlib import Path
+import logging
+logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
+_logger = logging.getLogger("rsa-agentic")
+
 
 # Python 3.10 compatibility
 try:
@@ -31,8 +35,8 @@ def main():
             if not key:
                 print("\033[33m⚠️  OpenAI configured but no API key set!\033[0m")
                 print("\033[33m   Set it: /provider key openai sk-xxxxxxxx\033[0m\n")
-    except:
-        pass
+    except Exception as e:
+        _logger.warning(f"Config load failed: {e}")
 
     # Safety: warn if running as root
     if os.geteuid() == 0:
