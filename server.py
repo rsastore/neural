@@ -50,7 +50,9 @@ def create_app(provider, config=None):
         msg = body.get("message","")
         if not msg:
             raise HTTPException(400,"message required")
-        return {"response": _session.run(msg)}
+        import asyncio
+        result = await asyncio.get_event_loop().run_in_executor(None, _session.run, msg)
+        return {"response": result}
 
     @app.post("/plan")
     async def plan(body: dict):
