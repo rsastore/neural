@@ -138,12 +138,33 @@ class AgentSession:
             for cb in self.tool_callbacks:
                 cb(tool_name, tool_args, output)
 
-            # Add to conversation
-            self._messages.append({"role": "assistant", "content": raw})
-            self._messages.append({
-                "role": "tool",
-                "content": f"[{tool_name}] Result:\n{output[:3000]}",
-            })
+            # Add to conversation - format depends on provider
+            is_openai = type(self.provider).__name__ == "OpenAIProvider"
+            if is_openai:
+                # Structured format for OpenAI-compatible APIs (DeepSeek, OpenAI, Groq, etc)
+                import json as _json
+                tool_call_id = f"call_{self.session_id}_{step}"
+                self._messages.append({
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [{
+                        "id": tool_call_id,
+                        "type": "function",
+                        "function": {"name": tool_name, "arguments": _json.dumps(tool_args)}
+                    }]
+                })
+                self._messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call_id,
+                    "content": str(output)[:3000],
+                })
+            else:
+                # Text format for local models (Ollama)
+                self._messages.append({"role": "assistant", "content": raw})
+                self._messages.append({
+                    "role": "tool",
+                    "content": f"[{tool_name}] Result:\n{output[:3000]}",
+                })
 
         self._messages.append({
             "role": "assistant",
@@ -227,7 +248,14 @@ class AgentSession:
                     output = "Cancelled by user"
                     yield {"type": "tool_result", "content": output}
                     self._messages.append({"role": "assistant", "content": raw})
-                    self._messages.append({"role": "tool", "content": f"[{tool_name}] {output}"})
+                    is_openai = type(self.provider).__name__ == "OpenAIProvider"
+                    if is_openai:
+                        import json as _json
+                        tc_id = f"call_{self.session_id}_{step}"
+                        self._messages.append({"role": "assistant", "content": None, "tool_calls": [{"id": tc_id, "type": "function", "function": {"name": tool_name, "arguments": _json.dumps(tool_args)}}]})
+                        self._messages.append({"role": "tool", "tool_call_id": tc_id, "content": str(output)[:3000]})
+                    else:
+                        self._messages.append({"role": "tool", "content": f"[{tool_name}] {output}"})
                     yield {"type": "token", "content": "\n[⛔ Cancelled]\n"}
                     continue
             tool = get_tool(tool_name)
@@ -239,7 +267,14 @@ class AgentSession:
                 cb(tool_name, tool_args, output)
             yield {"type": "tool_result", "content": output[:500]}
             self._messages.append({"role": "assistant", "content": raw})
-            self._messages.append({"role": "tool", "content": f"[{tool_name}] Result:\n{output[:3000]}"})
+            is_openai = type(self.provider).__name__ == "OpenAIProvider"
+            if is_openai:
+                import json as _json
+                tc_id = f"call_{self.session_id}_{step}"
+                self._messages.append({"role": "assistant", "content": None, "tool_calls": [{"id": tc_id, "type": "function", "function": {"name": tool_name, "arguments": _json.dumps(tool_args)}}]})
+                self._messages.append({"role": "tool", "tool_call_id": tc_id, "content": str(output)[:3000]})
+            else:
+                self._messages.append({"role": "tool", "content": f"[{tool_name}] Result:\n{output[:3000]}"})
         yield {"type": "final", "content": "Max iterations reached."}
 
 
@@ -275,7 +310,14 @@ class SubAgent:
                 else:
                     output = "Unknown tool"
                 messages.append({"role": "assistant", "content": raw})
-                messages.append({"role": "tool", "content": output[:2000]})
+                is_openai = type(self.provider).__name__ == "OpenAIProvider"
+                if is_openai:
+                    import json as _json
+                    tc_id = f"call_sub_{step}"
+                    messages.append({"role": "assistant", "content": None, "tool_calls": [{"id": tc_id, "type": "function", "function": {"name": tool_name, "arguments": _json.dumps(tool_args)}}]})
+                    messages.append({"role": "tool", "tool_call_id": tc_id, "content": str(output)[:2000]})
+                else:
+                    messages.append({"role": "tool", "content": output[:2000]})
             return {"task": self.task, "result": result or "No result"}
         except Exception as e:
             return {"task": self.task, "result": f"Error: {e}"}
