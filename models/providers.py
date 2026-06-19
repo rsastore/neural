@@ -110,11 +110,20 @@ class OpenAIProvider(ModelProvider):
         except ImportError:
             return "Error: openai not installed. Run: pip install openai"
         client = OpenAI(api_key=self.api_key, base_url=self.base_url)
-        r = client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature,
-        )
+        try:
+            r = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                extra_body={"thinking": {"type": "disabled"}},
+            )
+        except Exception:
+            # Fallback without extra_body for non-DeepSeek providers
+            r = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+            )
         self.last_tokens = {"input": r.usage.prompt_tokens if r.usage else 0, "output": r.usage.completion_tokens if r.usage else 0}
         return r.choices[0].message.content or ""
 
@@ -124,12 +133,21 @@ class OpenAIProvider(ModelProvider):
         except ImportError:
             return "Error: openai not installed. Run: pip install openai"
         client = OpenAI(api_key=self.api_key, base_url=self.base_url)
-        r = client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=self.temperature,
-            stream=True,
-        )
+        try:
+            r = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                stream=True,
+                extra_body={"thinking": {"type": "disabled"}},
+            )
+        except Exception:
+            r = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                stream=True,
+            )
         self.last_tokens = {"input": 0, "output": 0}
         for chunk in r:
             delta = chunk.choices[0].delta.content or ""
