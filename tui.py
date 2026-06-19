@@ -1058,7 +1058,7 @@ class NeuralTUI:
                 console.print(f"[green]Added provider: {pname}[/green]")
                 console.print("[dim]To use it: /provider set {pname}[/dim]")
         elif cmd == "/project":
-            import subprocess, json
+            import subprocess, json, os
             cwd = os.getcwd()
             console.print(f"[bold cyan]Project: {os.path.basename(cwd)}[/bold cyan]")
             console.print(f"  [dim]Path: {cwd}[/dim]")
@@ -1189,7 +1189,7 @@ class NeuralTUI:
             for t in tasks:
                 console.print(f"  {t['name']:<20} {t['goal'][:60]}")
         elif cmd == "/explorer":
-            import subprocess
+            import subprocess, os
             cwd = os.getcwd()
             console.print("[bold cyan]File Explorer[/bold cyan]")
             console.print(f"  [dim]CWD: {cwd}[/dim]")
