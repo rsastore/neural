@@ -282,7 +282,7 @@ class NeuralTUI:
                 console.print(f"\n  [bold red]Error:[/bold red] {e}")
 
     def _handle_command(self, cmd: str):
-        cmd = cmd.strip().lower()
+        cmd = cmd.strip().lower()  # case-insensitive
         import os, sys
         import os as _os, sys as _sys
 
