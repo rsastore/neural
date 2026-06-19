@@ -32,20 +32,29 @@ def auto_fix(text):
 def parse_tool_call(text):
     js = extract_json(text)
     if not js: return None
+    # Try normal parse
     try:
         d = json.loads(js)
         if 'tool' in d: return d
     except: pass
+    # Try auto-fix
     try:
         d = json.loads(auto_fix(js))
         if 'tool' in d: return d
     except: pass
+    # Try regex fallback for malformed JSON
     tm = re.search(r'"tool"\s*:\s*"([^"]+)"', js)
-    am = re.search(r'"args"\s*:\s*(\{[^}]+\})', js)
     if tm:
         args = {}
+        # Extract args with regex for various formats
+        am = re.search(r'"args"\s*:\s*\{(.*?)\}', js, re.DOTALL)
         if am:
-            try: args = json.loads(am.group(1))
-            except: pass
+            try:
+                raw = "{" + am.group(1) + "}"
+                args = json.loads(auto_fix(raw))
+            except:
+                # Extract simple key:value pairs
+                for kv in re.findall(r'"([^"]+)"\s*:\s*"([^"]+)"', am.group(1)):
+                    args[kv[0]] = kv[1]
         return {'tool': tm.group(1), 'args': args}
     return None

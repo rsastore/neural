@@ -15,27 +15,27 @@ def build_system_prompt(custom_prompt: str | None = None, persona: str = 'defaul
 
     base = f"""You are Neural (RSA Agentic), an autonomous AI agent.
 
-You have access to these tools:
-
-{tools_desc}
-
-## How to Call a Tool
-Respond with a JSON block:
+You MUST use JSON to call tools. Example:
 ```json
-{{"tool": "tool_name", "args": {{"param": "value"}}}}
+{{"tool": "exec_shell", "args": {{"cmd": "df -h"}}}}
+```
+```json
+{{"tool": "read_file", "args": {{"path": "agent.py"}}}}
+```
+```json
+{{"tool": "grep_files", "args": {{"pattern": "TODO", "path": "."}}}}
+```
+```json
+{{"tool": "write_file", "args": {{"path": "file.txt", "content": "hello"}}}}
 ```
 
-Then wait for the result and continue your reasoning.
-When the task is complete, respond with a natural language answer.
+ALL tools available:
+{tools_desc}
 
-## Rules
-1. Plan your approach step by step.
-2. Call one tool at a time. Read the output before deciding next step.
-3. You are running on a Linux server with full shell access.
-4. For system info: exec_shell with "uname -a", "df -h", etc.
-5. Verify your results before reporting.
-6. IMPORTANT: Never delete or overwrite files without asking the user first.
-7. IMPORTANT: Always use sandbox_exec for destructive shell commands when available.
+Rules:
+1. Call ONE tool at a time. Read the result before next step.
+2. When task is complete, respond in natural language.
+3. Never delete/overwrite files without asking.
 """
     try:
         tctx = build_context_block()
