@@ -361,7 +361,7 @@ class NeuralTUI:
                 with open(cfg_path, "w") as f:
                     f.write("\n".join(lines))
                 from models.providers import create_provider
-                self.provider = create_provider(cfg)
+                self.provider = create_provider(cfg.get("model", {}))
                 self.config = cfg
                 console.print(f"[green]✅ Now using: {self.provider.name}[/green]")
         elif cmd == "/engine":
@@ -1214,7 +1214,7 @@ class NeuralTUI:
             console.print(f"[green]Switched to provider: {pname}[/green]")
             # Apply immediately - recreate provider & reload session
             from models.providers import create_provider
-            self.provider = create_provider(cfg)
+            self.provider = create_provider(cfg.get("model", {}))
             self.config = cfg
             console.print(f"[dim]Provider active: {self.provider.name}[/dim]")
         elif cmd.startswith("/provider key "):
