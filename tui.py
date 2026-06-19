@@ -67,7 +67,13 @@ def bootstrap_display(provider_name: str, model_name: str, tool_count: int):
             models = _r.json().get("models", [])
             if models:
                 # Show actual running model
-                actual = models[0]["name"]
+                # If config model exists, use it; otherwise use first available
+                cfg_model = model_name
+                installed = [m["name"] for m in models]
+                if cfg_model in installed:
+                    actual = cfg_model
+                else:
+                    actual = installed[0]  # fallback to first available
                 grid.add_row("● Model", actual)
                 grid.add_row("● Provider", f"Ollama/{actual}")
             else:
