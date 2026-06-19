@@ -107,6 +107,11 @@ def _fine_tune(dataset: str, model_name: str = "qwen2.5:1.5b", output: str = "")
     with open(ft_path, 'w') as f:
         f.write(script)
     return f"Fine-tuning script: {ft_path}\nRun: python3 {ft_path} (requires GPU)"
+SAFE_COMMANDS = ["ls", "cat", "grep", "df", "du", "ps", "top", "free", "who",
+    "date", "echo", "pwd", "which", "head", "tail", "wc", "sort",
+    "uname", "id", "uptime", "dmesg", "journalctl", "systemctl",
+    "docker", "curl", "wget", "ping", "netstat", "ss", "ip", "python3", "git"]
+
 DESTRUCTIVE_PATTERNS = ["rm -rf", "rm -fr", "mkfs", "dd if=", "> /dev/sd", "chmod -R 777", 
                      "wget -O /", "curl -o /", "mv /* ", ":(){ :|:& };:", "git push --force"]
 
