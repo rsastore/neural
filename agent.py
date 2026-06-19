@@ -41,7 +41,7 @@ When the task is complete, respond with a natural language answer.
         tctx = build_context_block()
         if tctx:
             base += f"\n\n{tctx}"
-    except:
+    except Exception:
         pass
     # Knowledge is injected per-user-message in run_stream()
     # Add persona instruction
