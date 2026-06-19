@@ -895,15 +895,34 @@ class NeuralTUI:
                 current = cfg.get("model", {}).get("model_name", "unknown")
                 provider = cfg.get("model", {}).get("provider", "?")
                 console.print(f"[cyan]Current: {provider} / {current}[/cyan]")
-                latest = {
-                    "deepseek": ["deepseek-v4-flash", "deepseek-v4-pro", "deepseek-chat", "deepseek-reasoner"],
-                    "openai": ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano", "gpt-4o", "o3-mini", "o4-mini"],
-                    "anthropic": ["claude-sonnet-4-20250514", "claude-opus-4-20250514", "claude-haiku-3-20250313"],
-                    "google": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"],
-                    "groq": ["llama-4-scout-17b", "llama-4-maverick-17b", "deepseek-r1-distill-llama-70b"],
-                    "openrouter": ["deepseek/deepseek-v4-flash", "openai/gpt-5.5", "anthropic/claude-sonnet-4", "google/gemini-2.5-flash"],
-                }
-                models = latest.get(provider, [])
+                import requests as _req
+                models = []
+                api_key = ""
+                api_base = ""
+                pcfg = cfg.get("model", {}).get(provider, {})
+                if isinstance(pcfg, dict):
+                    api_key = pcfg.get("api_key", "")
+                    api_base = pcfg.get("base_url", "")
+                if not api_base:
+                    api_map = {"deepseek": "https://api.deepseek.com", "openai": "https://api.openai.com", "groq": "https://api.groq.com", "openrouter": "https://openrouter.ai/api"}
+                    api_base = api_map.get(provider, "")
+                if api_base and api_key:
+                    try:
+                        r = _req.get(f"{api_base.rstrip('/')}/v1/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=5)
+                        if r.status_code == 200:
+                            all_m = r.json().get("data", [])
+                            all_m.sort(key=lambda x: x.get("created", 0), reverse=True)
+                            models = [m["id"] for m in all_m[:20]]
+                    except: pass
+                if not models:
+                    if provider == "anthropic" and api_key:
+                        try:
+                            r = _req.get("https://api.anthropic.com/v1/models", headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"}, timeout=5)
+                            if r.status_code == 200:
+                                models = [m["id"] for m in r.json().get("data", [])[:15]]
+                        except: pass
+                    elif provider == "google":
+                        models = ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash"]
                 if models:
                     console.print(f"[bold]Available {provider} models:[/bold]")
                     for m in models:
