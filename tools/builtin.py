@@ -118,6 +118,18 @@ DESTRUCTIVE_PATTERNS = ["rm -rf", "rm -fr", "mkfs", "dd if=", "> /dev/sd", "chmo
 def _exec_shell(cmd: str, cwd: str = "."):
     # Safety check
     cmd_lower = cmd.lower()
+    # Check approved command list from config
+    try:
+        cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
+        if os.path.exists(cfg_path):
+            cfg = tomllib.load(open(cfg_path, "rb"))
+            approved = cfg.get("tools", {}).get("approved", [])
+            if approved:
+                cmd_name = cmd_lower.split()[0] if cmd_lower.split() else ""
+                if cmd_name not in approved and cmd_name not in ["/bin/" + c for c in approved]:
+                    return f"[BLOCKED] Command '{cmd_name}' not in approved list. Allowed: {approved}"
+    except Exception:
+        pass
     for pattern in DESTRUCTIVE_PATTERNS:
         if pattern in cmd_lower:
             return f"[BLOCKED] Dangerous command detected: {pattern}. Use sandbox_exec or get explicit approval."
