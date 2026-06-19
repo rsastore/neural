@@ -51,6 +51,15 @@ class OllamaProvider(ModelProvider):
             import time
             time.sleep(5)
             r = self._call(messages, stream=False)
+        if r.status_code == 404:
+            # Model not found — auto-pull
+            import subprocess as _sp
+            _sp.run(["ollama", "pull", self.model], timeout=1800)
+            r = self._call(messages, stream=False)
+            if r.status_code == 200:
+                data = r.json()
+                self.last_tokens = {"input": data.get("prompt_eval_count",0), "output": data.get("eval_count",0)}
+                return data.get("message", {}).get("content", "")
         if r.status_code != 200:
             return f"Error: Ollama returned {r.status_code}: {r.text[:100]}"
         data = r.json()
