@@ -1235,6 +1235,15 @@ class NeuralTUI:
                 console.print(f"[red]Error: {e}[/red]")
         elif cmd == "/vectordb":
             try:
+                # Ensure embedding model is available
+                import requests as _req, subprocess as _sp
+                _check = _req.get("http://localhost:11434/api/tags", timeout=3)
+                if _check.status_code == 200:
+                    installed = [m["name"] for m in _check.json().get("models", [])]
+                    if "nomic-embed-text:latest" not in installed:
+                        console.print("[yellow]Downloading nomic-embed-text for embeddings...[/yellow]")
+                        _sp.run(["ollama", "pull", "nomic-embed-text"], timeout=300)
+                        console.print("[green]✅ Embedding model ready[/green]")
                 from vectordb import add_from_knowledge, search
                 console.print("[bold cyan]Vector Database[/bold cyan]")
                 console.print("Rebuilding vector index from knowledge...")
