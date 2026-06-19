@@ -316,14 +316,32 @@ class NeuralTUI:
         
         # Simplified commands
         if cmd == "/engine":
-            engines = [
-                ("ollama", "Default, easiest"),
-                ("llama.cpp", "Native C++, faster on CPU"),
-                ("vllm", "Fastest on GPU"),
-            ]
+            import shutil as _sh, subprocess as _sp, os as _os
+            # Detect installed engines on the system
+            detected = []
+            if _sh.which("ollama"):
+                try:
+                    r = _sp.run(["ollama", "--version"], capture_output=True, text=True, timeout=5)
+                    ver = r.stdout.strip() or r.stderr.strip() or ""
+                    detected.append(f"ollama [green]✅ {ver.split()[-1]}[/green]")
+                except:
+                    detected.append("ollama [yellow]✅ installed (no version)[/yellow]")
+            else:
+                detected.append("ollama [red]❌ not installed[/red]")
+            if _sh.which("llama-server") or _sh.which("llama-cli"):
+                detected.append("llama.cpp [green]✅[/green]")
+            else:
+                detected.append("llama.cpp [dim]-[/dim]")
+            try:
+                import vllm
+                detected.append("vllm [green]✅[/green]")
+            except:
+                detected.append("vllm [dim]-[/dim]")
             console.print("[bold cyan]Inference engines:[/bold cyan]")
-            for i, (n, d) in enumerate(engines, 1):
-                console.print(f"  {i}. [cyan]{n:<15}[/cyan] {d}")
+            for e in detected:
+                console.print(f"  ● {e}")
+            console.print()
+            console.print("[dim]Current: ollama (default)[/dim]")
             console.print("[dim]Usage: /engine ollama | /engine llama.cpp | /engine vllm[/dim]")
             return
         if cmd.startswith("/engine "):
