@@ -8,103 +8,59 @@ class OllamaProvider(ModelProvider):
         self.temperature = config.get("temperature", 0.3)
         self.max_tokens = config.get("max_tokens", 4096)
         self.timeout = config.get("timeout", 120)
-        import requests
         self.session = requests.Session()
-        # Auto-start Ollama if not running
         self._ensure_running()
 
     def _ensure_running(self):
         import subprocess, time
         try:
             r = self.session.get(f"{self.host}/api/tags", timeout=2)
-            if r.status_code == 200:
-                return  # Already running
-        except Exception:
-            pass
-        # Try to start Ollama
+            if r.status_code == 200: return
+        except: pass
         try:
             subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             time.sleep(2)
-        except Exception:
-            pass
+        except: pass
 
     @property
-    def name(self) -> str:
-        return f"Ollama/{self.model}"
+    def name(self) -> str: return f"Ollama/{self.model}"
 
-    def _call(self, messages: list[dict], stream: bool = False):
-        url = f"{self.host}/api/chat"
-        body = {
-            "model": self.model,
-            "messages": messages,
-            "options": {
-                "temperature": self.temperature,
-                "num_predict": self.max_tokens,
-            },
-            "stream": stream,
-        }
-        return self.session.post(url, json=body, timeout=self.timeout, stream=stream)
-
-    def chat(self, messages: list[dict], **kwargs) -> str:
-        r = self._call(messages, stream=False)
-        if r.status_code in (429, 502, 503):
-            import time
-            time.sleep(5)
-            r = self._call(messages, stream=False)
-        if r.status_code == 404:
-            # Model not found — suggest installed models instead
-            try:
-                import requests
-                tags = requests.get(f"{self.host}/api/tags", timeout=3).json()
-                installed = [m["name"] for m in tags.get("models", [])]
-                if installed:
-                    return f"Model '{self.model}' not found. Installed: {', '.join(installed[:5])}. Use: /model <name>"
-                return f"Model '{self.model}' not found. No models installed. Use: /model list"
-            except Exception:
-                return f"Error: Model '{self.model}' not found. Use: /model list"
+    def chat(self, messages: list[dict], **kw) -> str:
+        body = {"model": self.model, "messages": messages, "stream": False,
+                "temperature": self.temperature, "max_tokens": self.max_tokens}
+        r = self.session.post(f"{self.host}/api/chat", json=body, timeout=self.timeout)
         if r.status_code != 200:
-            return f"Error: Ollama returned {r.status_code}: {r.text[:100]}"
-        data = r.json()
-        self.last_tokens = {"input": data.get("prompt_eval_count",0), "output": data.get("eval_count",0)}
-        return data.get("message", {}).get("content", "")
+            return f"Error: Ollama returned {r.status_code}: {r.text}"
+        return r.json()["message"]["content"]
 
-    def chat_stream(self, messages: list[dict], **kwargs):
-        r = self._call(messages, stream=True)
-        import time as _t
-        self.last_tokens = {"input": 0, "output": 0, "ttft": 0, "elapsed": 0}
-        _start = _t.time()
-        _first = True
+    def chat_stream(self, messages: list[dict], **kw):
+        body = {"model": self.model, "messages": messages, "stream": True,
+                "temperature": self.temperature, "max_tokens": self.max_tokens}
+        r = self.session.post(f"{self.host}/api/chat", json=body, timeout=self.timeout, stream=True)
+        if r.status_code != 200:
+            yield f"Error: Ollama returned {r.status_code}: {r.text}"
+            return
         for line in r.iter_lines(decode_unicode=True):
             if line:
                 try:
-                    data = json.loads(line)
-                    content = data.get("message", {}).get("content", "")
-                    if content:
-                        if _first:
-                            self.last_tokens["ttft"] = _t.time() - _start
-                            _first = False
-                        yield content
-                    if data.get("done", False):
-                        self.last_tokens["elapsed"] = _t.time() - _start
-                        self.last_tokens["input"] = data.get("prompt_eval_count",0)
-                        self.last_tokens["output"] = data.get("eval_count",0)
-                        break
-                except json.JSONDecodeError:
-                    pass
+                    d = json.loads(line)
+                    if d.get("done"):
+                        return
+                    yield d.get("message", {}).get("content", "")
+                except: pass
 
 
 class OpenAIProvider(ModelProvider):
     def __init__(self, config: dict):
         self.api_key = config.get("api_key", "")
-        self.base_url = config.get("base_url", "https://api.openai.com/v1")
+        self.base_url = config.get("base_url", "https://api.openai.com/v1").rstrip("/")
         self.model = config.get("model", "gpt-4o")
         self.temperature = config.get("temperature", 0.3)
 
     @property
-    def name(self) -> str:
-        return f"OpenAI/{self.model}"
+    def name(self) -> str: return f"OpenAI/{self.model}"
 
-    def chat(self, messages: list[dict], **kwargs) -> str:
+    def chat(self, messages: list[dict], **kw) -> str:
         try:
             from openai import OpenAI
         except ImportError:
@@ -112,56 +68,164 @@ class OpenAIProvider(ModelProvider):
         client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         try:
             r = client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
+                model=self.model, messages=messages, temperature=self.temperature,
                 extra_body={"thinking": {"type": "disabled"}},
             )
         except Exception:
-            # Fallback without extra_body for non-DeepSeek providers
             r = client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
+                model=self.model, messages=messages, temperature=self.temperature,
             )
-        self.last_tokens = {"input": r.usage.prompt_tokens if r.usage else 0, "output": r.usage.completion_tokens if r.usage else 0}
         return r.choices[0].message.content or ""
 
-    def chat_stream(self, messages: list[dict], **kwargs):
+    def chat_stream(self, messages: list[dict], **kw):
         try:
             from openai import OpenAI
         except ImportError:
-            return "Error: openai not installed. Run: pip install openai"
+            yield "Error: openai not installed. Run: pip install openai"
+            return
         client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         try:
             r = client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
-                stream=True,
-                extra_body={"thinking": {"type": "disabled"}},
+                model=self.model, messages=messages, temperature=self.temperature,
+                stream=True, extra_body={"thinking": {"type": "disabled"}},
             )
         except Exception:
             r = client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
+                model=self.model, messages=messages, temperature=self.temperature,
                 stream=True,
             )
-        self.last_tokens = {"input": 0, "output": 0}
         for chunk in r:
             delta = chunk.choices[0].delta.content or ""
-            if delta:
-                yield delta
-            if chunk.usage:
-                self.last_tokens = {"input": chunk.usage.prompt_tokens, "output": chunk.usage.completion_tokens}
+            if delta: yield delta
+
+
+    def format_assistant_with_tool(self, tool_name: str, tool_args: dict, tool_call_id: str = None) -> dict:
+        """Format assistant message with structured tool call."""
+        if not tool_call_id:
+            import uuid
+            tool_call_id = f"call_{uuid.uuid4().hex[:12]}"
+        return {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [{
+                "id": tool_call_id,
+                "type": "function",
+                "function": {"name": tool_name, "arguments": json.dumps(tool_args)}
+            }]
+        }
+
+    def format_tool_result(self, tool_name: str, output: str, tool_call_id: str = None) -> dict:
+        """Format tool result message."""
+        if not tool_call_id:
+            tool_call_id = "call_unknown"
+        return {
+            "role": "tool",
+            "tool_call_id": tool_call_id,
+            "content": str(output)[:30000]
+        }
+
+    def build_tools_schema(self, tools_list: list) -> list[dict]:
+        """Build OpenAI-compatible tools schema from tool definitions."""
+        schemas = []
+        for t in tools_list:
+            props = {}
+            required = []
+            for pname, pdesc in t.params.items():
+                props[pname] = {"type": "string", "description": pdesc}
+                required.append(pname)
+            schemas.append({
+                "type": "function",
+                "function": {
+                    "name": t.name,
+                    "description": t.description,
+                    "parameters": {
+                        "type": "object",
+                        "properties": props,
+                        "required": required
+                    }
+                }
+            })
+        return schemas
+
+
+class AnthropicProvider(ModelProvider):
+    def __init__(self, config: dict):
+        self.api_key = config.get("api_key", "")
+        self.model = config.get("model", "claude-sonnet-4-20250514")
+        self.temperature = config.get("temperature", 0.3)
+
+    @property
+    def name(self) -> str: return f"Anthropic/{self.model}"
+
+    def chat(self, messages: list[dict], **kw) -> str:
+        headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+        body = {"model": self.model, "messages": messages,
+                "max_tokens": 4096, "temperature": self.temperature}
+        try:
+            r = requests.post("https://api.anthropic.com/v1/messages", json=body, headers=headers, timeout=60)
+            if r.status_code == 200:
+                return r.json()["content"][0]["text"]
+            return f"Error: {r.status_code} {r.text}"
+        except Exception as e:
+            return f"Error: {e}"
+
+    def chat_stream(self, messages: list[dict], **kw):
+        headers = {"x-api-key": self.api_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+        body = {"model": self.model, "messages": messages,
+                "max_tokens": 4096, "temperature": self.temperature, "stream": True}
+        try:
+            r = requests.post("https://api.anthropic.com/v1/messages", json=body, headers=headers, timeout=60, stream=True)
+            for line in r.iter_lines(decode_unicode=True):
+                if line and line.startswith("data: "):
+                    d = json.loads(line[6:])
+                    if d["type"] == "content_block_delta":
+                        yield d["delta"].get("text", "")
+        except Exception as e:
+            yield f"Error: {e}"
+
+
+class GoogleProvider(ModelProvider):
+    def __init__(self, config: dict):
+        self.api_key = config.get("api_key", "")
+        self.model = config.get("model", "gemini-2.0-flash")
+
+    @property
+    def name(self) -> str: return f"Google/{self.model}"
+
+    def chat(self, messages: list[dict], **kw) -> str:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+        parts = [{"text": m["content"]} for m in messages if "content" in m and m["content"]]
+        body = {"contents": [{"parts": parts}]}
+        try:
+            r = requests.post(url, json=body, timeout=30)
+            if r.status_code == 200:
+                return r.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            return f"Error: {r.status_code}"
+        except Exception as e:
+            return f"Error: {e}"
+
+    def chat_stream(self, messages: list[dict], **kw):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:streamGenerateContent?key={self.api_key}&alt=sse"
+        parts = [{"text": m["content"]} for m in messages if "content" in m and m["content"]]
+        body = {"contents": [{"parts": parts}]}
+        try:
+            r = requests.post(url, json=body, timeout=30, stream=True)
+            for line in r.iter_lines(decode_unicode=True):
+                if line and line.startswith("data: "):
+                    try:
+                        d = json.loads(line[6:])
+                        text = d.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                        if text: yield text
+                    except: pass
+        except Exception as e:
+            yield f"Error: {e}"
 
 
 def create_provider(config: dict) -> ModelProvider:
     prov_name = config.get("provider", "ollama")
     prov_cfg = config.get(prov_name, {})
-    m = config.get("model_name", "")
-    prov_cfg["model_name"] = m
+    m = config.get("model_name", prov_cfg.get("model", ""))
+    prov_cfg["model_name"] = config.get("model_name", m)
     prov_cfg["model"] = prov_cfg.get("model", config.get("model_name") or "gpt-4o")
     prov_cfg["temperature"] = config.get("temperature", 0.3)
     prov_cfg["max_tokens"] = config.get("max_tokens", 4096)
@@ -175,7 +239,6 @@ def create_provider(config: dict) -> ModelProvider:
     elif prov_name == "google":
         return GoogleProvider(prov_cfg)
     else:
-        # Well-known OpenAI-compatible providers
         known_apis = {
             "deepseek": "https://api.deepseek.com",
             "groq": "https://api.groq.com/openai/v1",
@@ -189,95 +252,3 @@ def create_provider(config: dict) -> ModelProvider:
         if prov_cfg.get("api_key") or prov_cfg.get("base_url"):
             return OpenAIProvider(prov_cfg)
         raise ValueError(f"Unknown provider: {prov_name}. Use /provider add <name> <base_url> <key> to register.")
-
-
-class AnthropicProvider(ModelProvider):
-    def __init__(self, config: dict):
-        self.api_key = config.get("api_key", "")
-        self.model = config.get("model", "claude-sonnet-4-20250514")
-        self.temperature = config.get("temperature", 0.3)
-        self.max_tokens = config.get("max_tokens", 4096)
-
-    @property
-    def name(self) -> str:
-        return f"Anthropic/{self.model}"
-
-    def chat(self, messages, **kw) -> str:
-        try:
-            from anthropic import Anthropic
-        except ImportError:
-            return "Error: anthropic not installed. Run: pip install anthropic"
-        cl = Anthropic(api_key=self.api_key)
-        # Convert tool results to user messages (Anthropic doesn't support "tool" role)
-        converted = []
-        for m in messages:
-            if m["role"] == "tool":
-                converted.append({"role": "user", "content": f"[Result] {m['content']}"})
-            elif m["role"] != "system":
-                converted.append(m)
-        r = cl.messages.create(
-            model=self.model,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            messages=converted,
-            system="\n".join(m["content"] for m in messages if m["role"] == "system"),
-        )
-        self.last_tokens = {"input": r.usage.input_tokens, "output": r.usage.output_tokens}
-        return r.content[0].text if r.content else ""
-
-    def chat_stream(self, messages, **kw):
-        from anthropic import Anthropic
-        cl = Anthropic(api_key=self.api_key)
-        with cl.messages.stream(
-            model=self.model,
-            max_tokens=self.max_tokens,
-            temperature=self.temperature,
-            messages=[m for m in messages if m["role"] != "system"],
-            system="\n".join(m["content"] for m in messages if m["role"] == "system"),
-        ) as s:
-            for text in s.text_stream:
-                yield text
-
-
-class GoogleProvider(ModelProvider):
-    def __init__(self, config: dict):
-        self.api_key = config.get("api_key", "")
-        self.model = config.get("model", "gemini-2.0-flash")
-        self.temperature = config.get("temperature", 0.3)
-
-    @property
-    def name(self) -> str:
-        return f"Google/{self.model}"
-
-    def chat(self, messages, **kw) -> str:
-        import google.generativeai as genai
-        genai.configure(api_key=self.api_key)
-        model = genai.GenerativeModel(self.model)
-        # Filter out tool messages, convert to user messages
-        filtered = []
-        for m in messages[:-1]:
-            role = m["role"]
-            if role in ("user", "assistant"):
-                filtered.append({"role": role, "parts": [m["content"]]})
-            elif role == "tool":
-                filtered.append({"role": "user", "parts": [f"[Result] {m['content']}"]})
-        prompt = messages[-1]["content"] if messages else ""
-        chat = model.start_chat(history=filtered)
-        r = chat.send_message(prompt)
-        self.last_tokens = {"input": 0, "output": len(prompt.split())}
-        return r.text
-
-    def chat_stream(self, messages, **kw):
-        import google.generativeai as genai
-        genai.configure(api_key=self.api_key)
-        model = genai.GenerativeModel(self.model)
-        history = []
-        for m in messages[:-1]:
-            if m["role"] in ("user", "assistant"):
-                history.append({"role": m["role"], "parts": [m["content"]]})
-        prompt = messages[-1]["content"] if messages else ""
-        chat = model.start_chat(history=history)
-        r = chat.send_message(prompt, stream=True)
-        for chunk in r:
-            if chunk.text:
-                yield chunk.text
