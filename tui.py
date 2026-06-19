@@ -217,6 +217,8 @@ class NeuralTUI:
             try:
                 for event in self.session.run_stream(user_input):
                     if event["type"] == "token":
+                        if not buf:
+                            console.print("[dim]⚡ [/dim]", end="")
                         console.print(event["content"], end="")
                         buf.append(event["content"])
                     elif event["type"] == "tool_call":
