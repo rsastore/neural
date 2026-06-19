@@ -300,59 +300,56 @@ class NeuralTUI:
             _sys.exit(0)
         elif cmd in ("/help", "/?"):
             help_text = """
-**Commands:**
-- `/exit` — Quit Neural
-- `/help` — Show this help
-- `/clear` — Clear screen
+**Quick commands:**
+- `/model <name>` — Download & set model (e.g. /model llama3.2:3b)
+- `/model list` — Show popular models
+- `/engine` — List inference engines
+- `/engine <name>` — Install engine (ollama, llama.cpp)
+- `/hf search <query>` — Search HuggingFace models
+- `/hf pull <model-id>` — Download from HuggingFace
+
+**Session:**
+- `/exit` — Quit
 - `/reset` — Reset conversation
-- `/status` — Show session info
-- `/tools` — List available tools
-- `/compact` — Compact long context (summarize old messages)
-- `/knowledge` — Show what Neural has learned
-- `/forget` — Clear all learned knowledge
-- `/persona` — Show current mode
-- `/provider` — List providers & API key status
+- `/save` — Save session
+- `/session list` — List sessions
+- `/session load <name>` — Load session
+
+**Provider:**
+- `/provider` — List providers & status
 - `/provider set <name>` — Switch provider
 - `/provider key <name> <key>` — Set API key
-- `/provider add <name> <url> [key]` — Add custom provider
-- `/persona <mode>` — Switch mode (coder, sysadmin, research, default)
-- `/reference <url>` — Analyze a GitHub repo and compare with Neural
-- `/context` — Show terminal context\n- `/memory` — Show working/episodic/preference memory\n- `/remember <fact>` — Add fact to working memory\n- `/pref key=value` — Save user preference
-- `/plan` — Show planning mode
-- `/plugins` — List loaded plugins & tools
+- `/persona <mode>` — Switch mode (coder, sysadmin, research)
+
+**Tools & Memory:**
+- `/tools` — List available tools
+- `/memory` — Show memory
+- `/remember <fact>` — Save fact
+- `/knowledge` — Show learned knowledge
+- `/forget` — Clear knowledge
+
+**System:**
+- `/status` — Session info
+- `/check` — System status (Ollama, RAM)
+- `/compact` — Compact context
+- `/vectordb` — Rebuild vector index
+- `/ft` — Fine-tune model
+- `/plugins` — List plugins
+- `/plan` — Planning mode
+
+**Tasks:**
 - `/checklist` — Show tasks
 - `/checklist add <task>` — Add task
 - `/checklist done <n>` — Mark done
-- `/checklist rm <n>` — Remove task
-- `/checklist clear` — Clear all
-- `/history` — Show recent sessions
-- `/session list` — List all sessions
-- `/session load <name>` — Load a session
-- `/session rm <name>` — Delete a session
-- `/save` — Force save session
-- `/install ollama` — Install Ollama (Termux / Linux)
-- `/install model <name>` — Download a model (e.g. qwen2.5:1.5b)
-- `/model <name>` — Switch model on the fly
-- `/vectordb` — Rebuild vector index with embeddings
-- `/ft` — Fine-tune model with dataset
-- `/hf search <query>` — Search models on HuggingFace
-- `/hf search <query>` — Search models on HuggingFace
-- `/hf pull <model>` — Download model from HuggingFace
-- `/model <name>` — Switch model (config)
-- `/models` — List installed models
-- `/reference <url>` — Analyze GitHub repo
-- `/context` — Show terminal context
-- `/memory` — Show working/episodic/preference memory
-- `/plan` — Show planning mode
-- `/quant` — Quantize model settings
-- `/nemotron` — One-click download + learn from Nemotron dataset
+
+**Dev:**
 - `/project` — Show project info
 - `/tree` — Show project tree
-- `/schedule` — Task scheduler
-- `/cost` — Show token usage & cost
 - `/explorer` — File explorer
-- `/dataset` — Manage dataset (list, search, learn)
-            """
+- `/cost` — Token usage & cost
+- `/reference <url>` — Analyze GitHub repo
+- `/schedule` — Task scheduler
+    """
             console.print(Markdown(help_text))
         elif cmd == "/clear":
             console.clear()
