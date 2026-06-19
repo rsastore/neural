@@ -267,7 +267,7 @@ class NeuralTUI:
                 # Download model
                 import subprocess as _sp
                 console.print(f"[cyan]Downloading {sub}...[/cyan]")
-                _sp.run(["ollama", "pull", sub], timeout=300)
+                _sp.run(["ollama", "pull", sub], timeout=1800)
         elif cmd == "/engine":
             engines = [
                 ("ollama", "Default, easiest"),
@@ -335,7 +335,7 @@ class NeuralTUI:
             else:
                 import subprocess as _sp
                 console.print(f"[cyan]Downloading {sub}...[/cyan]")
-                _sp.run(["ollama", "pull", sub], timeout=300)
+                _sp.run(["ollama", "pull", sub], timeout=1800)
             return
         if cmd == "/hf search":
             console.print("[yellow]Usage: /hf search <query> (e.g. /hf search qwen 3b)[/yellow]")
@@ -838,7 +838,7 @@ class NeuralTUI:
             elif action == "model" and model_name:
                 console.print(f"[cyan]Downloading {model_name}...[/cyan]")
                 # Try Ollama first
-                r = subprocess.run(["ollama", "pull", model_name], capture_output=True, text=True, timeout=300)
+                r = subprocess.run(["ollama", "pull", model_name], capture_output=True, text=True, timeout=1800)
                 if r.returncode == 0:
                     console.print(f"[green]✅ {model_name} downloaded![/green]")
                 else:
