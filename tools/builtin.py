@@ -409,7 +409,7 @@ def tool_descriptions() -> str:
             lines.append(pds)
     except Exception:
         pass
-    return "\\n".join(lines)
+    return "\n".join(lines)
 
 def plugin_tool_count() -> int:
     try:
