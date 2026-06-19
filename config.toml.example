@@ -17,6 +17,11 @@ api_key = ""
 base_url = "https://api.openai.com/v1"
 model = "gpt-4o"
 
+[model.deepseek]
+api_key = ""
+base_url = "https://api.deepseek.com"
+model = "deepseek-v4-flash"
+
 [model.anthropic]
 api_key = ""
 model = "claude-sonnet-4-20250514"
@@ -32,33 +37,16 @@ need_approval = [
     "exec_shell",
     "write_file",
     "edit_file",
-    "git_commit",
     "sandbox_exec",
+    "any"
 ]
+verbose = false
 
-[tools]
-approved = [
-    "exec_shell",
-    "read_file",
-    "write_file",
-    "list_dir",
-    "grep_files",
-]
-need_approval = [
-    "exec_shell",
-    "write_file",
-    "edit_file",
-    "git_commit",
-    "sandbox_exec",
-]
+[vectordb]
+provider = "ollama"
+model = "nomic-embed-text"
+dimension = 768
 
-[ui]
-theme = "dark"
-show_tool_calls = true
-stream_output = true
-compact_at_pct = 60
-
-[model.deepseek]
-api_key = ""
-base_url = "https://api.deepseek.com"
-model = "deepseek-chat"
+[schedule]
+enabled = false
+interval_minutes = 60
