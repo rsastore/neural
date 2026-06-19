@@ -71,7 +71,7 @@ def _github_search(query: str):
     try:
         r = subprocess.run(["gh","search","repos",query,"--limit","5"], capture_output=True, text=True, timeout=15)
         return r.stdout[:2000] if r.stdout else r.stderr[:200]
-    except: return "GitHub CLI not installed."
+    except Exception: return "GitHub CLI not installed."
 
 
 # ── Fine-tuning Tool ──
@@ -172,7 +172,7 @@ def _list_dir(path: str = "."):
         kind = "d" if os_mod.path.isdir(full) else "f"
         try:
             size = os_mod.path.getsize(full)
-        except:
+        except Exception:
             size = 0
         lines.append(f"{kind} {size:>8} {name}")
     return "\n".join(lines) if lines else "(empty)"
@@ -280,7 +280,7 @@ def _notify(title: str, body: str = ""):
     try:
         print(f"\033]9;{title};{body}\033\\", end="", flush=True)
         return f"Notification sent: {title}"
-    except:
+    except Exception:
         pass
     # Fallback: print to terminal
     return f"[NOTIFICATION] {title}: {body}"
@@ -420,5 +420,5 @@ def plugin_tool_count() -> int:
     try:
         from plugin_loader import list_tools as pl
         return len(pl())
-    except:
+    except Exception:
         return 0
