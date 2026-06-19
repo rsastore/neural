@@ -1447,7 +1447,12 @@ class NeuralTUI:
                 if tool:
                     console.print(f"  [dim]⚡ /{tool_name} {tool_args}[/dim]")
                     try:
-                        result = tool.fn(tool_args)
+                        # Convert args: first param name = the main arg
+                        params = list(tool.params.keys())
+                        kwargs = {}
+                        if tool_args and params:
+                            kwargs[params[0]] = tool_args
+                        result = tool(**kwargs)
                         console.print(f"  [green]{str(result)[:500]}[/green]")
                     except Exception as e:
                         console.print(f"  [red]Error: {e}[/red]")
