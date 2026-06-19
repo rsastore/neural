@@ -166,13 +166,22 @@ class AgentSession:
             self._pending_approved = True
             collected = []
             try:
+                stream_count = 0
                 for token in self.provider.chat_stream(self._messages):
+                    stream_count += 1
                     collected.append(token)
                     yield {"type": "token", "content": token}
-            except Exception:
+                if stream_count == 0:
+                    # Stream yielded nothing, try non-streaming
+                    raw = self.provider.chat(self._messages)
+                    if raw:
+                        collected = [raw]
+                        yield {"type": "token", "content": raw}
+            except Exception as e:
                 raw = self.provider.chat(self._messages)
-                collected = [raw]
-                yield {"type": "token", "content": raw}
+                if raw:
+                    collected = [raw]
+                    yield {"type": "token", "content": raw}
             raw = "".join(collected)
             # Track tokens
             try:

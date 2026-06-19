@@ -70,7 +70,6 @@ class OllamaProvider(ModelProvider):
 
     def chat_stream(self, messages: list[dict], **kwargs):
         r = self._call(messages, stream=True)
-        r.raise_for_status()
         import time as _t
         self.last_tokens = {"input": 0, "output": 0, "ttft": 0, "elapsed": 0}
         _start = _t.time()
