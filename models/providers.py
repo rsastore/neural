@@ -10,6 +10,23 @@ class OllamaProvider(ModelProvider):
         self.timeout = config.get("timeout", 120)
         import requests
         self.session = requests.Session()
+        # Auto-start Ollama if not running
+        self._ensure_running()
+
+    def _ensure_running(self):
+        import subprocess, time
+        try:
+            r = self.session.get(f"{self.host}/api/tags", timeout=2)
+            if r.status_code == 200:
+                return  # Already running
+        except Exception:
+            pass
+        # Try to start Ollama
+        try:
+            subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            time.sleep(2)
+        except Exception:
+            pass
 
     @property
     def name(self) -> str:
