@@ -202,7 +202,7 @@ class PlannerAgent:
                             data = _ref_analyze(ref_url)
                             if "error" not in data:
                                 yield {"type": "token", "content": "\n[auto] Learning from: " + ref_url + "\n"}
-                        except:
+                        except Exception:
                             pass
 
         # Phase 3: Summary
