@@ -334,6 +334,11 @@ class NeuralTUI:
             else:
                 # Download model
                 import subprocess as _sp
+                # Check if HF model (has "/" or .gguf extension)
+                if "/" in sub or sub.endswith(".gguf"):
+                    console.print(f"[yellow]Model '{sub}' is from HuggingFace, not Ollama.[/yellow]")
+                    console.print(f"[dim]Try: /hf pull {sub}[/dim]")
+                    return
                 console.print(f"[cyan]Downloading {sub}...[/cyan]")
                 _sp.run(["ollama", "pull", sub], timeout=1800)
                 # Switch to downloaded model immediately
@@ -459,6 +464,11 @@ class NeuralTUI:
                 return
             else:
                 import subprocess as _sp
+                # Check if HF model (has "/" or .gguf extension)
+                if "/" in sub or sub.endswith(".gguf"):
+                    console.print(f"[yellow]Model '{sub}' is from HuggingFace, not Ollama.[/yellow]")
+                    console.print(f"[dim]Try: /hf pull {sub}[/dim]")
+                    return
                 console.print(f"[cyan]Downloading {sub}...[/cyan]")
                 _sp.run(["ollama", "pull", sub], timeout=1800)
             return
