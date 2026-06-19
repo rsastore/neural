@@ -162,7 +162,10 @@ class AgentSession:
         self._messages.append({"role": "user", "content": enriched})
         
         need_approval = self.config.get("need_approval", ["exec_shell"])
+        yield {"type": "status", "content": "⏳ Loading model..."}
         for step in range(self.max_iters):
+            if step > 0:
+                yield {"type": "status", "content": f"↻ Agent step {step+1}/{self.max_iters}..."}
             self._pending_approved = True
             collected = []
             try:
@@ -178,6 +181,7 @@ class AgentSession:
                         collected = [raw]
                         yield {"type": "token", "content": raw}
             except Exception as e:
+                yield {"type": "status", "content": f"⚠️ Stream failed, retrying non-streaming..."}
                 raw = self.provider.chat(self._messages)
                 if raw:
                     collected = [raw]
@@ -192,6 +196,8 @@ class AgentSession:
             except Exception:
                 pass
             call = self._extract_tool_call(raw)
+            if call:
+                yield {"type": "status", "content": f"🛠 Running {call['tool']}()..."}
             if call is None:
                 self._messages.append({"role": "assistant", "content": raw})
                 # Auto-learn from this interaction

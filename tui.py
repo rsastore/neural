@@ -227,7 +227,11 @@ class NeuralTUI:
                 _spinner_th = _th.Thread(target=_spinner, daemon=True)
                 _spinner_th.start()
                 for event in self.session.run_stream(user_input):
-                    if event["type"] == "token":
+                    if event["type"] == "status":
+                        # Update spinner with status message
+                        msg = event["content"]
+                        console.print(f"[dim]{msg}[/dim]", end="\r")
+                    elif event["type"] == "token":
                         _done[0] = True
                         # Clear spinner line properly
                         console.print("\r\r", end="")
