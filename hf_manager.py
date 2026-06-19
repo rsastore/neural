@@ -173,9 +173,10 @@ def use_model(model_name):
     with open(fp, 'rb') as f:
         cfg = tomllib.load(f)
     cfg['model']['model_name'] = model_name
-    import tomli_w
+    import json as _json
+    # using _json for read
     with open(fp, 'w') as f:
-        tomli_w.dump(cfg, f)
+        f.write(_json.dumps(cfg, indent=2))
     return f'Switched to {model_name}'
 
 
