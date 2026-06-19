@@ -115,7 +115,7 @@ class NeuralTUI:
                     border_style="cyan",
                     box=box.ROUNDED,
                 ))
-            except:
+            except Exception:
                 console.print(Panel(
                     content,
                     title="[bold cyan]Neural[/bold cyan]",
