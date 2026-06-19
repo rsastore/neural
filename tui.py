@@ -279,6 +279,8 @@ class NeuralTUI:
 - `/model <name>` — Switch model on the fly
 - `/vectordb` — Rebuild vector index with embeddings
 - `/ft` — Fine-tune model with dataset
+- `/hf search <query>` — Search models on HuggingFace
+- `/hf pull <model>` — Download model from HuggingFace
 - `/dataset` — Manage dataset (list, search, learn)
             """
             console.print(Markdown(help_text))
