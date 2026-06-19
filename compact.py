@@ -21,7 +21,7 @@ def prune_messages(messages: list[dict], max_tokens: int = 4096) -> list[dict]:
     for m in reversed(others):
         t = estimate_tokens(m.get("content", ""))
         if t <= remaining:
-            kept.insert(1, m)  # Insert after system, maintaining order
+            kept.insert(min(1, len(kept)), m)  # Insert after system, maintaining order
             remaining -= t
     
     return kept
