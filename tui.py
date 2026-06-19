@@ -1199,6 +1199,8 @@ class NeuralTUI:
             cfg_path = os.path.expanduser("~/rsa-agentic/config.toml")
             with open(cfg_path, "rb") as f:
                 cfg = tomllib.load(f)
+            if "model" not in cfg:
+                cfg["model"] = {"provider": pname, "model_name": "default"}
             cfg["model"]["provider"] = pname
             # Allow model override: /provider set <name> <model>
             if model_override:
