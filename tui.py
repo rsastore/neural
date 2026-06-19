@@ -789,6 +789,7 @@ class NeuralTUI:
                     self.provider = create_provider(cfg.get("model", {}))
                     self.config = cfg
                     self.session.provider = self.provider
+                    self.session._messages = []
                     console.print(f"[green]✅ Switched to {self.provider.name}[/green]")
                     return
 
@@ -955,6 +956,7 @@ class NeuralTUI:
                     self.provider = create_provider(cfg.get("model", {}))
                     self.config = cfg
                     self.session.provider = self.provider
+                    self.session._messages = []
                     console.print(f"[green]✅ Switched to {self.provider.name}[/green]")
                     return
 
@@ -1219,6 +1221,7 @@ class NeuralTUI:
             self.provider = create_provider(cfg.get("model", {}))
             self.config = cfg
             self.session.provider = self.provider  # sync session
+            self.session._messages = []  # clear old format messages
             console.print(f"[dim]Provider active: {self.provider.name}[/dim]")
         elif cmd.startswith("/provider key "):
             rest = cmd[14:].strip()  # remove "/provider key "
