@@ -663,6 +663,30 @@ class NeuralTUI:
                     console.print(f"[green]✅ Model set to {model_name}. Restart to apply.[/green]")
                 else:
                     console.print("[red]Config not found at ~/rsa-agentic/config.toml[/red]")
+        elif cmd == "/setup":
+            import os as _os
+            # Create symlink in Termux bin dir
+            target = _os.path.expanduser("~/rsa-agentic/rsa")
+            if _os.path.exists("/data/data/com.termux"):
+                link = "/data/data/com.termux/files/usr/bin/rsa"
+                try:
+                    if _os.path.exists(link):
+                        _os.remove(link)
+                    _os.symlink(target, link)
+                    console.print(f"[green]✅ Symlink created: rsa -> {target}[/green]")
+                    console.print("[green]✅ Now you can type 'rsa' from anywhere![/green]")
+                except Exception as e:
+                    console.print(f"[yellow]Could not create symlink: {e}[/yellow]")
+                    console.print("[yellow]Try: pkg install termux-exec[/yellow]")
+            else:
+                # Linux: add to .bashrc
+                rc = _os.path.expanduser("~/.bashrc")
+                line = 'export PATH=$PATH:~/rsa-agentic'
+                if line not in open(rc).read():
+                    with open(rc, "a") as f:
+                        f.write(f"\n{line}\n")
+                    console.print(f"[green]✅ Added ~/rsa-agentic to PATH in {rc}[/green]")
+                console.print("[green]✅ Now type 'rsa' or restart terminal[/green]")
         elif cmd == "/install":
             console.print("[yellow]Usage: /install ollama | /install model <name>[/yellow]")
         elif cmd.startswith("/install "):
