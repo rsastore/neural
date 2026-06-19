@@ -219,12 +219,16 @@ class NeuralTUI:
                     if event["type"] == "token":
                         if not buf:
                             console.print("[dim]⚡ [/dim]", end="")
-                        # Typewriter effect: print char by char with small delay
+                        # Typewriter effect: word by word with delay
                         text = event["content"]
-                        for char in text:
-                            console.print(char, end="")
-                            import time as _t
-                            _t.sleep(0.02)  # 20ms per char = looks like typing
+                        import time as _t
+                        # Separate by spaces for word-by-word effect
+                        words = text.split(" ")
+                        for i, w in enumerate(words):
+                            console.print(w, end="")
+                            if i < len(words) - 1:
+                                console.print(" ", end="")
+                                _t.sleep(0.15)  # 150ms between words
                         buf.append(text)
                     elif event["type"] == "tool_call":
                         console.print(f"\n  [bright_black]⚡ {event['tool']}(...)[/bright_black]")
