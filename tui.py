@@ -268,6 +268,18 @@ class NeuralTUI:
                 import subprocess as _sp
                 console.print(f"[cyan]Downloading {sub}...[/cyan]")
                 _sp.run(["ollama", "pull", sub], timeout=1800)
+                # Switch to downloaded model immediately
+                import tomllib, tomli_w, os as _os
+                cfg_path = _os.path.expanduser("~/rsa-agentic/config.toml")
+                cfg = tomllib.load(open(cfg_path, "rb"))
+                cfg["model"]["model_name"] = sub
+                cfg["model"]["provider"] = "ollama"
+                with open(cfg_path, "w") as f:
+                    tomli_w.dump(cfg, f)
+                from models.providers import create_provider
+                self.provider = create_provider(cfg)
+                self.config = cfg
+                console.print(f"[green]✅ Now using: {self.provider.name}[/green]")
         elif cmd == "/engine":
             engines = [
                 ("ollama", "Default, easiest"),
