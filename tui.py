@@ -641,6 +641,8 @@ class NeuralTUI:
                 else:
                     console.print("[red]Config not found at ~/rsa-agentic/config.toml[/red]")
         elif cmd == "/install":
+            console.print("[yellow]Usage: /install ollama | /install model <name>[/yellow]")
+        elif cmd.startswith("/install "):
             # Auto-install Ollama (Termux / Linux)
             import subprocess, sys, os as _os
             pkg = cmd.split(None, 1)
