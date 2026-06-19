@@ -697,7 +697,7 @@ class NeuralTUI:
                     console.print(f"[green]✅ Added ~/rsa-agentic to PATH in {rc}[/green]")
                 console.print("[green]✅ Now type 'rsa' or restart terminal[/green]")
         elif cmd == "/install":
-            console.print("[yellow]Usage: /install ollama | /install model <name>[/yellow]")
+            console.print("[yellow]Usage: /install ollama | /install model <name> | /install llama.cpp | /install engines[/yellow]")
         elif cmd.startswith("/install "):
             # Auto-install Ollama (Termux / Linux)
             import subprocess, sys, os as _os
@@ -705,7 +705,7 @@ class NeuralTUI:
             action = parts[1] if len(parts) > 1 else ""
             model_name = parts[2] if len(parts) > 2 else ""
             if not action:
-                console.print("[yellow]Usage: /install ollama | /install model <name>[/yellow]")
+                console.print("[yellow]Usage: /install ollama | /install model <name> | /install llama.cpp | /install vllm[/yellow]")
             elif action == "ollama":
                 console.print("[cyan]Installing Ollama...[/cyan]")
                 if _os.path.exists("/data/data/com.termux"):
@@ -717,6 +717,32 @@ class NeuralTUI:
                     subprocess.Popen(["ollama", "serve"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 else:
                     console.print(f"[red]Install failed: {r.stderr[:200]}[/red]")
+            elif action == "llama.cpp":
+                console.print("[cyan]Installing llama.cpp (native C++ inference)...[/cyan]")
+                if _os.path.exists("/data/data/com.termux"):
+                    r = subprocess.run(["pkg", "install", "llama.cpp", "-y"], capture_output=True, text=True, timeout=120)
+                else:
+                    r = subprocess.run(["bash", "-c", "git clone https://github.com/ggerganov/llama.cpp && cd llama.cpp && make -j4"], capture_output=True, text=True, timeout=300)
+                if r.returncode == 0:
+                    console.print("[green]✅ llama.cpp installed![/green]")
+                    console.print("[dim]Run: cd ~/llama.cpp && ./server -m model.gguf[/dim]")
+                else:
+                    console.print(f"[red]Install failed: {r.stderr[:200]}[/red]")
+            elif action == "vllm":
+                console.print("[cyan]Installing vLLM (fast inference server)...[/cyan]")
+                r = subprocess.run(["pip", "install", "vllm", "flask"], capture_output=True, text=True, timeout=300)
+                if r.returncode == 0:
+                    console.print("[green]✅ vLLM installed![/green]")
+                    console.print("[dim]Run: python -m vllm.entrypoints.openai.api_server --model model-name[/dim]")
+                else:
+                    console.print(f"[red]Install failed: {r.stderr[:200]}[/red]")
+            elif action == "engines":
+                console.print("[bold cyan]Available inference engines:[/bold cyan]")
+                console.print("  [cyan]ollama[/cyan]     — Default, easiest (recommended)")
+                console.print("  [cyan]llama.cpp[/cyan]  — Native C++, faster on CPU")
+                console.print("  [cyan]vllm[/cyan]       — Fastest on GPU")
+                console.print()
+                console.print("[dim]Usage: /install <engine> (e.g. /install ollama)[/dim]")
             elif action == "model" and model_name:
                 console.print(f"[cyan]Downloading {model_name}...[/cyan]")
                 # Try Ollama first
@@ -761,7 +787,7 @@ class NeuralTUI:
                 console.print()
                 console.print("[dim]Type: /install model <name> (e.g. /install model qwen2.5:1.5b)[/dim]")
             else:
-                console.print("[yellow]Usage: /install ollama | /install model <name>[/yellow]")
+                console.print("[yellow]Usage: /install ollama | /install model <name> | /install llama.cpp | /install engines[/yellow]")
         elif cmd == "/check":
             # Quick system check
             import requests as _req, os as _os
