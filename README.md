@@ -15,6 +15,11 @@ cd rsa-agentic
 # Update (get latest features + bug fixes)
 git pull
 
+# Make it accessible from anywhere:
+echo 'export PATH=\$PATH:~/rsa-agentic' >> ~/.bashrc
+source ~/.bashrc
+rsa
+
 # Local (Ollama)
 pip install prompt_toolkit rich requests
 ollama pull qwen2.5:1.5b

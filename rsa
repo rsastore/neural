@@ -1,0 +1,3 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# RSA Agentic — run from anywhere
+cd ~/rsa-agentic && python3 neural.py "$@"
